@@ -63,7 +63,7 @@ setMethod("initialize", "piecewisePolynomial",
 )
 
 defaultRangeFormatter <- function(min, max, x="x", digits = NULL) {
-    if (is.null(digits)) {
+    if (!is.null(digits)) {
         min = format(min, digits=digits)
         max = format(max, digits=digits)
     }
