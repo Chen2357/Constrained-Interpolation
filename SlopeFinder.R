@@ -29,6 +29,10 @@ constrainedQuadratic.minSlope <- function(data) {
     x = point.x(data)
     y = point.y(data)
 
+    if (y[1] == 0) {
+        return(0)
+    }
+
     # Solve for a(x-h)^2
     h <- (sqrt(y[1])*x[2] + sqrt(y[2]*x[1])) / (sqrt(y[1])+sqrt(y[2]))
     a <- (y[1])/((x[1]-h)^2)
@@ -39,6 +43,10 @@ constrainedQuadratic.minSlope <- function(data) {
 constrainedQuadratic.maxSlope <- function(data) {
     x = point.x(data)
     y = point.y(data)
+
+    if (y[2] == 0) {
+        return(0)
+    }
 
     h <- (sqrt(y[1])*x[2] + sqrt(y[2]*x[1])) / (sqrt(y[1])+sqrt(y[2]))
     if (is.infinite(h)) {
