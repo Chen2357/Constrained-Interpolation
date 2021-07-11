@@ -25,60 +25,87 @@ setMethod("coef<-", "polynomial", function(object,value) {
 })
 
 # ANCHOR Operator
-`%+%` <- function(poly1, poly2) {
-    n <- max(degree(poly1), degree(poly2))
+setMethod("+", signature(e1 = "polynomial", e2 = "polynomial"), function(e1, e2) {
+    n <- max(degree(e1), degree(e2))
     sum <- polynomial(degree = n)
-    sum@coef <- c(coef(poly1), rep(0, n-degree(poly1))) + c(coef(poly2), rep(0, n-degree(poly2)))
+    sum@coef <- c(coef(e1), rep(0, n-degree(e1))) + c(coef(e2), rep(0, n-degree(e2)))
     return(sum)
-}
+})
 
-`%-%` <- function(poly1, poly2) {
-    n <- max(degree(poly1), degree(poly2))
+setMethod("+", signature(e1 = "numeric", e2 = "polynomial"), function(e1, e2) {
+    coef(e2)[1] <- e1 + coef(e2)[1]
+    return(e2)
+})
+
+setMethod("+", signature(e1 = "polynomial", e2 = "numeric"), function(e1, e2) {
+    coef(e1)[1] <- coef(e1)[1] + e2
+    return(e1)
+})
+
+setMethod("-", signature(e1 = "polynomial", e2 = "polynomial"), function(e1, e2) {
+    n <- max(degree(e1), degree(e2))
     result <- polynomial(degree = n)
-    result@coef <- c(coef(poly1), rep(0, n-degree(poly1))) - c(coef(poly2), rep(0, n-degree(poly2)))
+    result@coef <- c(coef(e1), rep(0, n-degree(e1))) - c(coef(e2), rep(0, n-degree(e2)))
     return(result)
-}
+})
 
-`%*%` <- function(poly1, poly2) {
-    product <- polynomial(degree = (degree(poly1) + degree(poly2)))
+setMethod("-", signature(e1 = "numeric", e2 = "polynomial"), function(e1, e2) {
+    coef(e2) <- -coef(e2)
+    coef(e2)[1] <- e1 + coef(e2)[1]
+    return(e2)
+})
 
-    for (i in 1:length(coef(poly1))) {
-        for (j in 1:length(coef(poly2))) {
-            product@coef[i+j-1] <- coef(product)[i+j-1] + coef(poly1)[i] * coef(poly2)[j]
+setMethod("-", signature(e1 = "polynomial", e2 = "numeric"), function(e1, e2) {
+    coef(e1)[1] <- coef(e1)[1] - e2
+    return(e1)
+})
+
+setMethod("*", signature(e1 = "polynomial", e2 = "polynomial"), function(e1, e2) {
+    product <- polynomial(degree = (degree(e1) + degree(e2)))
+
+    for (i in 1:length(coef(e1))) {
+        for (j in 1:length(coef(e2))) {
+            product@coef[i+j-1] <- coef(product)[i+j-1] + coef(e1)[i] * coef(e2)[j]
         }
     }
     return(product)
-}
+})
+
+setMethod("*", signature(e1 = "polynomial", e2 = "numeric"), function(e1, e2) return(polynomial(coef(e1) * e2)))
+
+
+setMethod("*", signature(e1 = "numeric", e2 = "polynomial"), function(e1, e2) return(polynomial(e1 * coef(e2))))
 
 is.wholenumber <- function(x, tol = .Machine$double.eps^0.5)  abs(x - round(x)) < tol
 
-`%^%` <- function(poly, exp) {
-    if(exp%%1 != 0) {
-        warning("exponent must be an integer, caught ", exp)
+setMethod("^", signature(e1 = "polynomial", e2 = "numeric"), function(e1, e2) {
+    if(e2%%1 != 0) {
+        warning("exponent must be an integer, caught ", e2)
         return(NULL)
     }
     result <- polynomial(c(1))
 
-    while (exp > 0) {
-        if (exp %% 2 == 1) {
-            result <- result %*% poly
-            exp <- (exp-1)/2
+    while (e2 > 0) {
+        if (e2 %% 2 == 1) {
+            result <- result * e1
+            e2 <- (e2-1)/2
         } else {
-            exp <- exp/2
+            e2 <- e2/2
         }
-        poly <- poly %*% poly
+        e1 <- e1 * e1
     }
 
     return(result)
-}
+})
 
-`%chain%` <- function(poly1, poly2) {
+setGeneric("chain", function(e1,e2) standardGeneric("chain"))
+setMethod("chain", signature(e1 = "polynomial", e2 = "polynomial"), function(e1, e2) {
     result <- polynomial(c(0))
-    for (i in 1:length(coef(poly1))) {
-        result <- result %+% (polynomial(c(coef(poly1)[i])) %*% (poly2 %^% (i-1)))
+    for (i in 1:length(coef(e1))) {
+        result <- result + (polynomial(c(coef(e1)[i])) * (e2 ^ (i-1)))
     }
     return(result)
-}
+})
 
 # ANCHOR Methods
 setGeneric("degree", function(object) standardGeneric("degree"))
@@ -126,7 +153,7 @@ setMethod("str", "polynomial",
                 if (is.null(digits)) {
                     coef <- object@coef[i]
                 } else {
-                    coef <- format(object@coef[1], digits)
+                    coef <- format(object@coef[i], digits)
                 }
                 if (i==1) {
                     eq <- paste(eq, coef, sep = "")
@@ -147,5 +174,5 @@ setMethod("show", "polynomial",
 )
 
 # ANCHOR Make numeric conforms to polynomial
-setMethod("coef", "numeric", function(object) object)
-setMethod("degree", "numeric", function(object) 0)
+# setMethod("coef", "numeric", function(object) object)
+# setMethod("degree", "numeric", function(object) 0)
