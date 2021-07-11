@@ -126,7 +126,7 @@ setMethod("str", "polynomial",
                 if (is.null(digits)) {
                     coef <- object@coef[i]
                 } else {
-                    coef <- format(object@coef[1], digits)
+                    coef <- format(object@coef[i], digits)
                 }
                 if (i==1) {
                     eq <- paste(eq, coef, sep = "")
