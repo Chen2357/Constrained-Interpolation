@@ -124,7 +124,7 @@ setMethod("str", "polynomial",
         for (i in 1:length(object@coef)) {
             if (object@coef[i] != 0) {
                 if (is.null(digits)) {
-                    coef <- object@coef[1]
+                    coef <- object@coef[i]
                 } else {
                     coef <- format(object@coef[1], digits)
                 }
