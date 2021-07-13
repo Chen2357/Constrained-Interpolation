@@ -1,8 +1,4 @@
 defaultPatchPolynomial <- function(a,b,p) {
-    print(a)
-    print(b)
-    print(p)
-    print(1 - (3 * (p ^ 2)))
     (((1 - (3 * (p ^ 2))) + (2 * (p ^ 3))) * (a - b)) + b
 }
 
@@ -16,9 +12,7 @@ quadraticPolynomial <- function(x,y) {
 
 # produces the quadratic that goes through (x[1],y[1]) and (x[2],y[2]) and has a certain slope at (x[1],y[1])
 projectQuadratic <- function(x,y,s) {
-    r <- y[1] + (s * polynomial(c(-x[1],1))) + ( ((y[2]-y[1]-s*(x[2]-x[1]))/((x[2]-x[1])^2)) * polynomial(c(x[1]^2,-2*x[1],1)) )
-    print(r)
-    r
+    y[1] + (s * polynomial(c(-x[1],1))) + ( ((y[2]-y[1]-s*(x[2]-x[1]))/((x[2]-x[1])^2)) * polynomial(c(x[1]^2,-2*x[1],1)) )
 }
 
 quadraticPatchInterpolate <- function(data, patch = defaultPatchPolynomial) {
