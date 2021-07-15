@@ -123,6 +123,9 @@ setMethod("initialize", "polynomial",
     }
 )
 
+setGeneric("differentiate", function(x) standardGeneric("differentiate"))
+setMethod("differentiate", "polynomial", function(x) polynomial(coef(x)[-1] * 1:degree(x)))
+
 setGeneric("predict", function(object,newdata) standardGeneric("predict"))
 setMethod("predict", signature(object="polynomial",newdata="numeric"),
     function(object, newdata) {

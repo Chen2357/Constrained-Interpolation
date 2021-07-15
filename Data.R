@@ -35,7 +35,7 @@ setMethod("point.y<-", "pointData", function(object,value) {
     object
 })
 
-setMethod("plot", "pointData",
+setMethod("points", "pointData",
     function(x, ...) {
         points(x@x,x@y,...)
     }

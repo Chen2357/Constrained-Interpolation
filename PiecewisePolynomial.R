@@ -45,9 +45,17 @@ setMethod("leftMostBound", "piecewisePolynomial", function(object) min(object@le
 setGeneric("rightMostBound", function(object) standardGeneric("rightMostBound"))
 setMethod("rightMostBound", "piecewisePolynomial", function(object) max(object@rightBound))
 
+setMethod("differentiate", "piecewisePolynomial", function(x) piecewisePolynomial(x@leftBound, x@rightBound, lapply(x@polynomial, differentiate)))
+
 setMethod("plot", "piecewisePolynomial",
     function(x, interval=seq(leftMostBound(x),rightMostBound(x),0.05),type="l", ...) {
         plot(interval, predict(x, interval), type=type, ...)
+    }
+)
+
+setMethod("lines", "piecewisePolynomial",
+    function(x, interval=seq(leftMostBound(x),rightMostBound(x),0.05), ...) {
+        lines(interval, predict(x, interval), ...)
     }
 )
 
