@@ -15,22 +15,22 @@ projectQuadratic <- function(x,y,s) {
     y[1] + (s * polynomial(c(-x[1],1))) + ( ((y[2]-y[1]-s*(x[2]-x[1]))/((x[2]-x[1])^2)) * polynomial(c(x[1]^2,-2*x[1],1)) )
 }
 
-quadraticPatchInterpolate <- function(data, patch = defaultPatchPolynomial) {
+quadraticPatchInterpolate <- function(data, slope, patch = defaultPatchPolynomial) {
     n <- length(data)
     leftBound <- point.x(data)[1:(n-1)]
     rightBound <- point.x(data)[2:n]
     polynomial <- vector(mode = "list", length = n-1)
 
-    if (is(data,"slopedPointData")) {
+    if (!missing(slope)) {
         for (i in 1:(n-1)) {
             polynomial[[i]] = patch(
-                projectQuadratic(point.x(data)[i:(i+1)],point.y(data)[i:(i+1)],slope(data)[i]),
-                projectQuadratic(point.x(data)[(i+1):i],point.y(data)[(i+1):i],slope(data)[i+1]),
+                projectQuadratic(point.x(data)[i:(i+1)],point.y(data)[i:(i+1)],slope[i]),
+                projectQuadratic(point.x(data)[(i+1):i],point.y(data)[(i+1):i],slope[i+1]),
                 percentagePolynomial(point.x(data)[i],point.x(data)[i+1])
                 )
             # validObject(polynomial[[i]])
         }
-    } else if (is(data,"pointData")) {
+    } else {
         # Original interpolation method
         polynomial[[1]] = quadraticPolynomial(point.x(data)[1:3],y(data)[1:3])
         polynomial[[n-1]] = quadraticPolynomial(point.x(data)[n-2:n],y(data)[n-2:n])
@@ -41,14 +41,11 @@ quadraticPatchInterpolate <- function(data, patch = defaultPatchPolynomial) {
                 percentagePolynomial(point.x(data)[i],point.x(data)[i+1])
                 )
         }
-    } else {
-        warning("Unsupported data class")
-        return(NULL)
     }
     return(piecewisePolynomial(leftBound, rightBound, polynomial))
 }
 
-linearPatchInterpolate <- function(data, patch = defaultPatchPolynomial) {
+linearPatchInterpolate <- function(data, slope, patch = defaultPatchPolynomial) {
     n <- length(data)
     leftBound <- point.x(data)[1:(n-1)]
     rightBound <- point.x(data)[2:n]
@@ -56,8 +53,8 @@ linearPatchInterpolate <- function(data, patch = defaultPatchPolynomial) {
 
     for (i in 1:(n-1)) {
         polynomial[[i]] = patch(
-            y[i] + (slope(data)[i] * polynomial(-x[i],1)),
-            y[i+1] + (slope(data)[i+1] * polynomial(-x[i+1],1)),
+            y[i] + (slope[i] * polynomial(-x[i],1)),
+            y[i+1] + (slope[i+1] * polynomial(-x[i+1],1)),
             percentagePolynomial(point.x(data)[i],point.x(data)[i+1])
             )
     }
@@ -65,7 +62,7 @@ linearPatchInterpolate <- function(data, patch = defaultPatchPolynomial) {
     return(piecewisePolynomial(leftBound, rightBound, polynomial))
 }
 
-quadraticJointInterpolate <- function(data) {
+quadraticJointInterpolate <- function(data, slope) {
     n <- length(data)
     leftBound <- rep(NA, 2*n-2)
     rightBound <- rep(NA, 2*n-2)
@@ -73,18 +70,18 @@ quadraticJointInterpolate <- function(data) {
 
     for (i in 1:(n-1)) {
         dx <- point.x(data)[i+1] - point.x(data)[i]
-        a <- 2 * ((point.y(data)[i+1] - point.y(data)[i]) / dx - slope(data)[i])
-        ds <- slope(data)[i+1] - slope(data)[i]
+        a <- 2 * ((point.y(data)[i+1] - point.y(data)[i]) / dx - slope[i])
+        ds <- slope[i+1] - slope[i]
         secondDerivative <- (a - ds + ifelse(a>ds,1,-1)*sqrt((a-ds)^2+ds^2)) / dx
         breakingPoint <- (point.x(data)[i+1] + point.x(data)[i] + ds / secondDerivative) / 2
 
         leftBound[2*i-1] <- point.x(data)[i]
         rightBound[2*i-1] <- breakingPoint
-        polynomial[[2*i-1]] <- point.y(data)[i] + (slope(data)[i] * polynomial(c(-point.x(data)[i],1))) + ((secondDerivative/2) * polynomial(c(point.x(data)[i]^2,-2*point.x(data)[i],1)))
+        polynomial[[2*i-1]] <- point.y(data)[i] + (slope[i] * polynomial(c(-point.x(data)[i],1))) + ((secondDerivative/2) * polynomial(c(point.x(data)[i]^2,-2*point.x(data)[i],1)))
 
         leftBound[2*i] <- breakingPoint
         rightBound[2*i] <- point.x(data)[i+1]
-        polynomial[[2*i]] <- point.y(data)[i+1] + (slope(data)[i+1] * polynomial(c(-point.x(data)[i+1],1))) - ((secondDerivative/2) * polynomial(c(point.x(data)[i+1]^2,-2*point.x(data)[i+1],1)))
+        polynomial[[2*i]] <- point.y(data)[i+1] + (slope[i+1] * polynomial(c(-point.x(data)[i+1],1))) - ((secondDerivative/2) * polynomial(c(point.x(data)[i+1]^2,-2*point.x(data)[i+1],1)))
     }
 
     return(piecewisePolynomial(leftBound, rightBound, polynomial))

@@ -13,14 +13,14 @@ data <- pointData(x=x,y=y)
 # Example slope finding algorithms:
 # quadraticSlopeFind
 # constrainedQuadraticSlopeFind
-slopeData <- quadraticSlopeFind(data)
-print(slope(slopeData))
+slope <- quadraticSlopeFind(data)
+print(slope)
 
 # Example interpolation algorithms:
 # quadraticPatchInterpolate
 # linearPatchInterpolate
 # quadraticJointInterpolate
-interpolation <- quadraticPatchInterpolate(slopeData)
+interpolation <- quadraticPatchInterpolate(data, slope)
 print(interpolation, format = "table", digits = 5)
 
 plot(interpolation, xlab="x", ylab="y", ylim=range(-2,3.5))

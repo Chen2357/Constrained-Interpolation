@@ -22,7 +22,7 @@ quadraticSlopeFind <- function(data) {
             slope[i] <- threePointQuadraticSlope(data[(i-1):(i+1)])
         }
     }
-    return(slopedPointData(x=point.x(data),y=point.y(data),slope=slope))
+    return(slope)
 }
 
 constrainedQuadratic.minSlope <- function(data) {
@@ -73,5 +73,5 @@ constrainedQuadraticSlopeFind <- function(data) {
             slope[i] <- median(c(threePointQuadraticSlope(data[(i-1):(i+1)]), minSlope, maxSlope))
         }
     }
-    return(slopedPointData(x=point.x(data),y=point.y(data),slope=slope))
+    return(slope)
 }
