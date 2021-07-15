@@ -26,18 +26,18 @@ setValidity("piecewisePolynomial", function(object) {
 
 setMethod("length", "piecewisePolynomial", function(x) length(x@leftBound))
 
-setMethod("func", "piecewisePolynomial",
-    function(object) {
-        function(x) {
-            y = rep(NA, length(x))
-            for(i in 1:length(object)) {
-                indices <- which(object@leftBound[i] <= x & x <= object@rightBound[i])
-                y[indices] = func(object@polynomial[[i]])(x[indices])
-            }
-            return(y)
+setMethod("predict", signature(object="piecewisePolynomial",newdata="numeric"),
+    function(object,newdata) {
+        y = rep(NA, length(newdata))
+        for(i in 1:length(object)) {
+            indices <- which(object@leftBound[i] <= newdata & newdata <= object@rightBound[i])
+            y[indices] = predict(object@polynomial[[i]],newdata[indices])
         }
+        return(y)
     }
 )
+
+setMethod("as.function", "piecewisePolynomial", function(x) function(xx) predict(x,xx))
 
 setGeneric("leftMostBound", function(object) standardGeneric("leftMostBound"))
 setMethod("leftMostBound", "piecewisePolynomial", function(object) min(object@leftBound))
@@ -45,9 +45,9 @@ setMethod("leftMostBound", "piecewisePolynomial", function(object) min(object@le
 setGeneric("rightMostBound", function(object) standardGeneric("rightMostBound"))
 setMethod("rightMostBound", "piecewisePolynomial", function(object) max(object@rightBound))
 
-setMethod("graph", "piecewisePolynomial",
-    function(object,x=seq(leftMostBound(object),rightMostBound(object),0.05)) {
-        plot(x, func(object)(x),type="l",xlab="x", ylab="y")
+setMethod("plot", "piecewisePolynomial",
+    function(x, interval=seq(leftMostBound(x),rightMostBound(x),0.05),type="l", ...) {
+        plot(interval, predict(x, interval), type=type, ...)
     }
 )
 

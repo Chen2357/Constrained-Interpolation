@@ -23,5 +23,5 @@ print(slope(slopeData))
 interpolation <- quadraticPatchInterpolate(slopeData)
 print(interpolation, format = "table", digits = 5)
 
-graph(interpolation)
-graph(data)
+plot(interpolation, xlab="x", ylab="y")
+plot(data, col="red")

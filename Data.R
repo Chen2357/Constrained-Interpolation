@@ -35,14 +35,13 @@ setMethod("point.y<-", "pointData", function(object,value) {
     object
 })
 
-setMethod("[", "pointData", function(x,i,...) pointData(x=point.x(x)[i],y=point.y(x)[i]))
-
-setGeneric("graph", function(object,...) standardGeneric("graph"))
-setMethod("graph", "pointData",
-    function(object, col="red") {
-        points(object@x,object@y,col=col)
+setMethod("plot", "pointData",
+    function(x, ...) {
+        points(x@x,x@y,...)
     }
 )
+
+setMethod("[", "pointData", function(x,i,...) pointData(x=point.x(x)[i],y=point.y(x)[i]))
 
 # ANCHOR: slopedPointData
 slopedPointData <- setClass("slopedPointData",

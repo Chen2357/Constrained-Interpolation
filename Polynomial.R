@@ -98,15 +98,6 @@ setMethod("^", signature(e1 = "polynomial", e2 = "numeric"), function(e1, e2) {
     return(result)
 })
 
-setGeneric("chain", function(e1,e2) standardGeneric("chain"))
-setMethod("chain", signature(e1 = "polynomial", e2 = "polynomial"), function(e1, e2) {
-    result <- polynomial(c(0))
-    for (i in 1:length(coef(e1))) {
-        result <- result + (polynomial(c(coef(e1)[i])) * (e2 ^ (i-1)))
-    }
-    return(result)
-})
-
 # ANCHOR Methods
 setGeneric("degree", function(object) standardGeneric("degree"))
 setMethod("degree", "polynomial", function(object) length(object@coef)-1)
@@ -132,18 +123,28 @@ setMethod("initialize", "polynomial",
     }
 )
 
-setGeneric("func", function(object) standardGeneric("func"))
-setMethod("func", "polynomial",
-    function(object) {
-        function(x) {
-            result <- rep(0, length(x))
-            for (i in 1:length(object@coef)) {
-                result <- result + object@coef[i] * x ^ (i-1)
-            }
-            return(result)
+setGeneric("predict", function(object,newdata) standardGeneric("predict"))
+setMethod("predict", signature(object="polynomial",newdata="numeric"),
+    function(object, newdata) {
+        result <- rep(0, length(newdata))
+        for (i in 1:length(object@coef)) {
+            result <- result + object@coef[i] * newdata ^ (i-1)
         }
+        return(result)
     }
 )
+
+setMethod("predict", signature(object="polynomial",newdata="polynomial"),
+    function(object, newdata) {
+        result <- polynomial(c(0))
+        for (i in 1:length(object@coef)) {
+            result <- result + object@coef[i] * (newdata ^ (i-1))
+        }
+        return(result)
+    }
+)
+
+setMethod("as.function", "polynomial", function(x) function(xx) predict(x,xx))
 
 setMethod("str", "polynomial",
     function(object, x="x", digits = NULL) {
