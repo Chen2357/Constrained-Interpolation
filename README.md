@@ -2,10 +2,9 @@
 A 2021 summer research project
 
 # Todo
-- [ ] Implement the slope finding algorithm based on the meeting of week 3
-- [ ] Compare with [quadprog](https://cran.r-project.org/web/packages/quadprog/quadprog.pdf) package
-- [ ] Add comments
+- [ ] Implement [QP.pdf](Resources/QP.pdf) using [quadprog](https://cran.r-project.org/web/packages/quadprog/quadprog.pdf) package
+- [ ] Calculate and plot derivative
 - [ ] Improve interface
-  - [ ] Implement more `SetValidity` for better bug catching
-  - [ ] Use `setMethod("+", ...)` to place `%+%` to increase readability
-  - [ ] Possible name change (e.g. `coef` to `c` and `point.x` to `data.x`)
+  - [ ] Decompose slopeData to pointData and slope for better readability
+  - [ ] Possibly turn the project into a library with [devtools](https://www.rdocumentation.org/packages/devtools/versions/2.4.2) package
+  - [ ] Documentation (preferably with devtools package)
