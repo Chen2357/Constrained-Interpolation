@@ -149,21 +149,16 @@ setMethod("predict", signature(object="polynomial",newdata="polynomial"),
 
 setMethod("as.function", "polynomial", function(x) function(xx) predict(x,xx))
 
-setMethod("str", "polynomial",
-    function(object, x="x", digits = NULL) {
+setMethod("as.character", "polynomial",
+    function(object, xlab="x", digits = getOption("digits")) {
         eq <- ""
         for (i in 1:length(object@coef)) {
             if (object@coef[i] != 0) {
-                if (is.null(digits)) {
-                    coef <- object@coef[i]
-                } else {
-                    coef <- format(object@coef[i], digits)
-                }
                 if (i==1) {
-                    eq <- paste(eq, coef, sep = "")
+                    eq <- paste(eq, signif(object@coef[i], digits), sep = "")
                 }
                 else {
-                    eq <- paste(eq,ifelse(eq!=""," + ", ""),coef,"*",x,ifelse(i==2,"",paste("^",i-1,sep="")), sep = "")
+                    eq <- paste(eq,ifelse(eq!=""," + ", ""),signif(object@coef[i], digits),"*",xlab,ifelse(i==2,"",paste("^",i-1,sep="")), sep = "")
                 }
             }
         }
@@ -173,10 +168,6 @@ setMethod("str", "polynomial",
 
 setMethod("show", "polynomial",
     function(object) {
-        print(str(object))
+        print(as.character(object))
     }
 )
-
-# ANCHOR Make numeric conforms to polynomial
-# setMethod("coef", "numeric", function(object) object)
-# setMethod("degree", "numeric", function(object) 0)

@@ -70,47 +70,32 @@ setMethod("initialize", "piecewisePolynomial",
     }
 )
 
-defaultRangeFormatter <- function(min, max, x="x", digits = NULL) {
-    if (!is.null(digits)) {
-        min = format(min, digits=digits)
-        max = format(max, digits=digits)
-    }
-    return(paste("(",x,">",min," & ",x,"<",max,")", sep = ""))
-}
+defaultRangeFormatter <- function(min, max, xlab="x", digits = getOption("digits")) paste("(",xlab,">",signif(min,digits)," & ",x,"<",signif(max,digits),")", sep = "")
 
 defaultPiecewisePolynomialFormat <- "raw"
 
-setMethod("str", "piecewisePolynomial",
-    function(object, x="x", rangeFormatter = defaultRangeFormatter, format = defaultPiecewisePolynomialFormat, digits = NULL) {
-        if (format == "raw") {
-            eq <- ""
-            for (i in 1:length(object)) {
-                eq <- paste(eq,ifelse(eq=="",""," + "),rangeFormatter(object@leftBound[i],object@rightBound[i],x=x,digits=digits),"*(",str(object@polynomial[[i]],x=x,digits=digits),")", sep = "")
-            }
-            return(ifelse(eq=="","0",eq))
-        } else if (format == "table") {
-            interval <- NULL
-            equation <- NULL
-            for (i in 1:length(object)) {
-                interval <- append(interval, rangeFormatter(object@leftBound[i],object@rightBound[i],x=x,digits=digits))
-                equation <- append(equation, str(object@polynomial[[i]],x=x,digits=digits))
-            }
-            result <- data.frame(interval, equation)
-            return(result)
-        } else {
-            warning("Unknown defaultPiecewisePolynomialFormat: ", defaultPiecewisePolynomialFormat)
+setMethod("as.character", "piecewisePolynomial",
+    function(object, xlab="x", rangeFormatter = defaultRangeFormatter, digits = getOption("digits")) {
+        eq <- ""
+        for (i in 1:length(object)) {
+            eq <- paste(eq,ifelse(eq=="",""," + "),rangeFormatter(object@leftBound[i],object@rightBound[i],x=xlab,digits=digits),"*(",str(object@polynomial[[i]],x=xlab,digits=digits),")", sep = "")
         }
+        return(ifelse(eq=="","0",eq))
     }
 )
+
+setMethod("as.data.frame", "piecewisePolynomial", function(x, xlab="x", rangeFormatter = defaultRangeFormatter, digits = getOption("digits"), ...) {
+    interval <- NULL
+    equation <- NULL
+    for (i in 1:length(x)) {
+        interval <- append(interval, rangeFormatter(x@leftBound[i],x@rightBound[i],x=xlab, digits = digits))
+        equation <- append(equation, str(x@polynomial[[i]],x=xlab,digits = digits))
+    }
+    return(data.frame(interval, equation, ...))
+})
 
 setMethod("show", "piecewisePolynomial",
     function(object) {
-        print(str(object))
-    }
-)
-
-setMethod("print", "piecewisePolynomial",
-    function(x, ...) {
-        print(str(x, ...))
+        print(as.character(object))
     }
 )

@@ -21,7 +21,9 @@ print(slope)
 # linearPatchInterpolate
 # quadraticJointInterpolate
 interpolation <- quadraticPatchInterpolate(data, slope)
-print(interpolation, format = "table", digits = 5)
+options(digits = 4)
+print(as.character(interpolation))
+print(as.data.frame(interpolation))
 
 plot(interpolation, xlab="x", ylab="y", ylim=range(-2,3.5))
 lines(differentiate(interpolation), col="blue")
