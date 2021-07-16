@@ -95,6 +95,8 @@ setMethod("as.character", "piecewisePolynomial",
     }
 )
 
+setMethod("degree", "piecewisePolynomial", function(object) max(unlist(lapply(object@polynomial, degree), use.names=FALSE)))
+
 setMethod("as.data.frame", "piecewisePolynomial", function(x, xlab="x", rangeFormatter = defaultRangeFormatter, digits = getOption("digits"), ...) {
     interval <- NULL
     equation <- NULL
