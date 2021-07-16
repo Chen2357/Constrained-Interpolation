@@ -1,3 +1,12 @@
+#' An S4 Class to Represent a Polynomial
+#' 
+#' @details
+#' Use \code{coef(object)} to access the coefficients.
+#' Use \code{degree(object)} to access the degree of the polynomial.
+#' Use \code{predict(object, newdata)} to evaluate the polynomial at \code{newdata} (polynomial is allowed). Alternatively, use \code{as.function(x)} to turn the polynomial into a function.
+#' Use \code{differentiate(x)} to take the derivative of the polynomial.
+#' 
+#' @slot coef A vector of coefficients from the lowest degree term to the highest degree term. For example, \code{coef[1]} correspond to the constant term in the polynomial.
 polynomial <- setClass("polynomial",
     slots = c(
         coef = "vector"

@@ -1,20 +1,59 @@
+#' The Default Patching Dunction
+#' 
+#' The function used in the interpolations that use patching.
+#' 
+#' The percentage of \code{a} is given by \code{3*p^2-2*p^3}. Likewise, the percentage of \code{b} is given by \code{1-3*p^2+2*p^3}.
+#' 
+#' @param a A polynomial.
+#' @param b A polynomial.
+#' @param p A polynomial that describes the phase between \code{a} and \code{b}, with value between 0 and 1.
+#' @return \code{(1-3*p^2+2*p^3)*(a-b)+b}
 defaultPatchPolynomial <- function(a,b,p) {
     (((1 - (3 * (p ^ 2))) + (2 * (p ^ 3))) * (a - b)) + b
 }
 
+#' Percentage Polynomial
+#' 
+#' The linear function that is 0 when evaluated at \code{min} and 1 when evaluated at \code{max}
+#' 
+#' @param min The value at which the function is 0.
+#' @param max The value at which the function is 1.
+#' @return \code{(x-min)/(max-min)}
 percentagePolynomial <- function(min,max) {
     (1/(max-min)) * polynomial(c(-min,1))
 }
 
+#' Quadratic Function Through Three Points
+#' 
+#' @param x The vector of x-coordinates. Only the first three values will be used.
+#' @param y The vector of y-coordinates. ONly, the first three values will be used.
+#' @return The quadratic polynomial that goes through \code{(x[1],y[1])}, \code{(x[2],y[2])}, and \code{(x[3],y[3])}.
 quadraticPolynomial <- function(x,y) {
     y[1] + ( ((y[2]-y[1])/(x[2]-x[1])) * polynomial(c(-x[1],10)) ) + ( (((y[2]-y[1])/(x[2]-x[1])-(y[3]-y[2])/(x[3]-x[2]))/(x[1]-x[3])) * polynomial(c(-x[1],1)) * polynomial(c(-x[2],1)) )
 }
 
-# produces the quadratic that goes through (x[1],y[1]) and (x[2],y[2]) and has a certain slope at (x[1],y[1])
+#' Quadratic Function Through Two Points with Given Slope
+#' 
+#' This function produces the quadratic that goes through (x[1],y[1]) and (x[2],y[2]) and has a certain slope at (x[1],y[1])
+#' 
+#' @param x The vector of x-coordinates. Only the first two values will be used.
+#' @param y The vector of y-coordinates. Only the first two values will be used.
+#' @param s The slope at point \code{(x[1],y[1])}
+#' @return The quadratic polynomial that goes through \code{(x[1],y[1])}, \code{(x[2],y[2])}, and has slope \code{s} at \code{(x[1],y[1])}.
 projectQuadratic <- function(x,y,s) {
     y[1] + (s * polynomial(c(-x[1],1))) + ( ((y[2]-y[1]-s*(x[2]-x[1]))/((x[2]-x[1])^2)) * polynomial(c(x[1]^2,-2*x[1],1)) )
 }
 
+#' Interpolation by Patching Quadratic Functions
+#' 
+#' Between any adjacent two points, the interpolated function is constructed by patching the two quadratic functions that go through the two points with the prescibed slope at each respective point.
+#' 
+#' If argument \code{slope} is missing, the interpolation will simply be patching two overlapping quadratic functions through two adjacent triplet of three points.
+#' 
+#' @param data A \code{pointData} type that stores all the points to be interpolated.
+#' @param slope (Optional) The prescribed slopes at each points.
+#' @param patch The function used for patching, uses \code{defaultPatchPolynomial} by default.
+#' @return A piecewise polynomial.
 quadraticPatchInterpolate <- function(data, slope, patch = defaultPatchPolynomial) {
     n <- length(data)
     leftBound <- point.x(data)[1:(n-1)]
@@ -45,6 +84,14 @@ quadraticPatchInterpolate <- function(data, slope, patch = defaultPatchPolynomia
     return(piecewisePolynomial(leftBound, rightBound, polynomial))
 }
 
+#' Interpolation by Patching Linear Functions
+#' 
+#' Between any adjacent two points, the interpolated function is constructed by patching the two linear functions that go through each respective point with the prescibed slope.
+#' 
+#' @param data A \code{pointData} type that stores all the points to be interpolated.
+#' @param slope  The prescribed slopes at each points.
+#' @param patch The function used for patching, uses \code{defaultPatchPolynomial} by default.
+#' @return A piecewise polynomial.
 linearPatchInterpolate <- function(data, slope, patch = defaultPatchPolynomial) {
     n <- length(data)
     leftBound <- point.x(data)[1:(n-1)]
@@ -62,6 +109,13 @@ linearPatchInterpolate <- function(data, slope, patch = defaultPatchPolynomial) 
     return(piecewisePolynomial(leftBound, rightBound, polynomial))
 }
 
+#' Interpolation by Connecting Quadratic Functions
+#' 
+#' Between any adjacent two points, the interpolated function is constructed by connecting the two quadratic functions that (1) go through each respective point with the prescibed slope, (2) are smoothly connected, (3) have the same absolute curvature.
+#' 
+#' @param data A \code{pointData} type that stores all the points to be interpolated.
+#' @param slope  The prescribed slopes at each points.
+#' @return A piecewise polynomial.
 quadraticJointInterpolate <- function(data, slope) {
     n <- length(data)
     leftBound <- rep(NA, 2*n-2)

@@ -1,3 +1,14 @@
+#' An S4 Class to Represent a Piecewise Polynomial
+#' 
+#' @details
+#' Use \code{length(object)} to get the number of piecewise ranges.
+#' Use \code{predict(object, newdata)} to evaluate at \code{newdata}. Alternatively, use \code{as.function(x)} to turn the piecewise polynomial into a function.
+#' Use \code{differentiate(x)} to take the derivative of each polynomial.
+#' Use \code{plot(x)} to \code{lines{x}} to plot the piecewise polynomial.
+#' 
+#' @slot leftBound A vector that stores the left bounds of the piecewise ranges.
+#' @slot rightBound A vector that stores the right bounds of the piecewise ranges.
+#' @slot polynomial A list that stores the polynomials at each piecewise ranges.
 piecewisePolynomial <- setClass("piecewisePolynomial",
     slots = c(
         leftBound = "vector",
