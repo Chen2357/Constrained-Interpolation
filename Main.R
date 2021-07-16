@@ -8,7 +8,7 @@ source("Interpolater.R")
 x <- c(1,2,3,4,5)
 y <- c(1,0,2,1,3)
 
-data <- pointData(x=x,y=y)
+data <- pointData(x,y)
 
 # Example slope finding algorithms:
 # quadraticSlopeFind

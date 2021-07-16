@@ -53,3 +53,13 @@ setMethod("points", "pointData",
 )
 
 setMethod("[", "pointData", function(x,i,...) pointData(x=point.x(x)[i],y=point.y(x)[i]))
+
+setMethod("initialize", "pointData",
+    function(.Object, x, y) {
+        .Object@x <- x
+        .Object@y <- y
+
+        validObject(.Object)
+        return(.Object)
+    }
+)
