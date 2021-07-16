@@ -150,15 +150,15 @@ setMethod("predict", signature(object="polynomial",newdata="polynomial"),
 setMethod("as.function", "polynomial", function(x) function(xx) predict(x,xx))
 
 setMethod("as.character", "polynomial",
-    function(object, xlab="x", digits = getOption("digits")) {
+    function(x, xlab="x", digits = getOption("digits")) {
         eq <- ""
-        for (i in 1:length(object@coef)) {
-            if (object@coef[i] != 0) {
+        for (i in 1:length(x@coef)) {
+            if (x@coef[i] != 0) {
                 if (i==1) {
-                    eq <- paste(eq, signif(object@coef[i], digits), sep = "")
+                    eq <- paste(eq, signif(x@coef[i], digits), sep = "")
                 }
                 else {
-                    eq <- paste(eq,ifelse(eq!=""," + ", ""),signif(object@coef[i], digits),"*",xlab,ifelse(i==2,"",paste("^",i-1,sep="")), sep = "")
+                    eq <- paste(eq,ifelse(eq!=""," + ", ""),signif(x@coef[i], digits),"*",xlab,ifelse(i==2,"",paste("^",i-1,sep="")), sep = "")
                 }
             }
         }
