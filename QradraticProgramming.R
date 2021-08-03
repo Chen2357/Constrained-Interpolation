@@ -26,23 +26,18 @@ solve.beta <- function(A, B, b, tol = .Machine$double.eps^0.5) {
     min <- NA
     sol <- NA
 
-    betaPlus <- expand.grid(0:1, 0:1, 0:1, 0:1, 0:1, 0:1)
-    betaMinus <- rep(1, 6) - expand.grid(0:1, 0:1, 0:1, 0:1, 0:1, 0:1)
-    colnames(betaPlus) <- NULL
-    colnames(betaMinus) <- NULL
-
-    betaNonzero <- cbind(betaPlus, betaMinus)
-    colnames(betaNonzero) <- NULL
-    betaNonzero <- data.matrix(betaNonzero)
+    betaPostive <- data.matrix(expand.grid(0:1, 0:1, 0:1, 0:1, 0:1, 0:1))
+    colnames(betaPostive) <- NULL
+    betaPostive <- cbind(betaPostive, !betaPostive)
 
     fullAhat <- kronecker(matrix(c(1, -1, -1, 1), nrow = 2, ncol = 2), A)
 
     for (i in 1:64) {
-        I <- which(betaNonzero[i, ] != 0)
+        I <- which(betaPostive[i, ] != 0)
         Ahat <- fullAhat[I, I]
         Bhat <- cbind(B, -B)[, I]
 
-        Ahat[lower.tri(Ahat)] <- Ahat[upper.tri(Ahat)] <-sym <- (Ahat[lower.tri(Ahat)] + Ahat[upper.tri(Ahat)])/2
+        Ahat[lower.tri(Ahat)] <- Ahat[upper.tri(Ahat)] <- (Ahat[lower.tri(Ahat)] + Ahat[upper.tri(Ahat)])/2
         Ahat <- rbind(cbind(Ahat, rep(0.5, 6)), t(c(rep(0.5, 6),0)))
         
         M <- cholesky(Ahat, tol = tol)
@@ -57,7 +52,7 @@ solve.beta <- function(A, B, b, tol = .Machine$double.eps^0.5) {
         if (is.na(min) | value < min) {
             min <- value
             sol <- result$X
-            I <- which(betaNonzero[i, 1:6] == 0)
+            I <- which(betaPostive[i, 1:6] == 0)
             if (length(I)>0) sol[I] <- -sol[I]
         }
     }
