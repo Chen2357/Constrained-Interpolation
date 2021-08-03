@@ -23,8 +23,8 @@ setValidity("piecewisePolynomial", function(object) {
     } else if (length(object@leftBound) != length(object@polynomial)) {
         "Numbers of ranges and polynomials are mismatched"
     } else {
-        for(i in 1:length(object@leftBound)) {
-            if(object@leftBound[i] > object@rightBound[i]) {
+        for (i in seq_len(length(object@leftBound))) {
+            if (object@leftBound[i] > object@rightBound[i]) {
                 return("Left bound cannot be greater than right bound")
             }
             else if (object@leftBound[i] < object@leftBound && object@leftBound < object@rightBound[i]) {
@@ -39,8 +39,8 @@ setMethod("length", "piecewisePolynomial", function(x) length(x@leftBound))
 
 setMethod("predict", signature(object="piecewisePolynomial",newdata="numeric"),
     function(object,newdata) {
-        y = rep(NA, length(newdata))
-        for(i in 1:length(object)) {
+        y <- rep(NA, length(newdata))
+        for(i in seq_len(length(object))) {
             indices <- which(object@leftBound[i] <= newdata & newdata <= object@rightBound[i])
             y[indices] = predict(object@polynomial[[i]],newdata[indices])
         }
@@ -83,12 +83,10 @@ setMethod("initialize", "piecewisePolynomial",
 
 defaultRangeFormatter <- function(min, max, xlab="x", digits = getOption("digits")) paste("(",xlab,">",signif(min,digits)," & ",xlab,"<",signif(max,digits),")", sep = "")
 
-defaultPiecewisePolynomialFormat <- "raw"
-
 setMethod("as.character", "piecewisePolynomial",
     function(x, xlab="x", rangeFormatter = defaultRangeFormatter, digits = getOption("digits")) {
         eq <- ""
-        for (i in 1:length(x)) {
+        for (i in seq_len(length(x))) {
             eq <- paste(eq,ifelse(eq=="",""," + "),rangeFormatter(x@leftBound[i],x@rightBound[i],xlab=xlab,digits=digits),"*(",as.character(x@polynomial[[i]],xlab=xlab,digits=digits),")", sep = "")
         }
         return(ifelse(eq=="","0",eq))
@@ -100,7 +98,7 @@ setMethod("degree", "piecewisePolynomial", function(object) max(unlist(lapply(ob
 setMethod("as.data.frame", "piecewisePolynomial", function(x, xlab="x", rangeFormatter = defaultRangeFormatter, digits = getOption("digits"), ...) {
     interval <- NULL
     equation <- NULL
-    for (i in 1:length(x)) {
+    for (i in seq_len(length(x))) {
         interval <- append(interval, rangeFormatter(x@leftBound[i],x@rightBound[i],xlab=xlab, digits = digits))
         equation <- append(equation, as.character(x@polynomial[[i]],xlab=xlab,digits = digits))
     }

@@ -14,7 +14,7 @@ polynomial <- setClass("polynomial",
 )
 
 setValidity("polynomial", function(object) {
-    for (i in 1:length(object@coef)) {
+    for (i in seq_len(length(object))) {
         if(!is.numeric(object@coef[i]) || is.na(object@coef[i])) {
             print(object@coef)
             return("Polynomial coefficients must be numeric")
@@ -72,8 +72,8 @@ setMethod("-", signature(e1 = "polynomial", e2 = "numeric"), function(e1, e2) {
 setMethod("*", signature(e1 = "polynomial", e2 = "polynomial"), function(e1, e2) {
     product <- polynomial(degree = (degree(e1) + degree(e2)))
 
-    for (i in 1:length(coef(e1))) {
-        for (j in 1:length(coef(e2))) {
+    for (i in seq_len(length(e1))) {
+        for (j in seq_len(length(e2))) {
             product@coef[i+j-1] <- coef(product)[i+j-1] + coef(e1)[i] * coef(e2)[j]
         }
     }
@@ -117,11 +117,18 @@ setMethod("degree<-", "polynomial", function(object,value) {
     object
 })
 
+setMethod("length", "polynomial", function(x) length(x@coef))
+setMethod("length<-", "polynomial", function(x,value) {
+    length(x@coef) <- value
+    validObject(x)
+    x
+})
+
 setMethod("initialize", "polynomial",
     function(.Object, coef, degree) {
-        if(missing(coef)) {
+        if (missing(coef)) {
             .Object@coef <- rep(0,ifelse(missing(degree), 1, degree+1))
-        } else if(missing(degree)) {
+        } else if (missing(degree)) {
             .Object@coef <- coef
         } else {
             .Object@coef <- c(coef, rep(0, degree + 1 - length(coef)))
@@ -139,7 +146,7 @@ setGeneric("predict", function(object,newdata) standardGeneric("predict"))
 setMethod("predict", signature(object="polynomial",newdata="numeric"),
     function(object, newdata) {
         result <- rep(0, length(newdata))
-        for (i in 1:length(object@coef)) {
+        for (i in seq_len(length(object))) {
             result <- result + object@coef[i] * newdata ^ (i-1)
         }
         return(result)
@@ -149,7 +156,7 @@ setMethod("predict", signature(object="polynomial",newdata="numeric"),
 setMethod("predict", signature(object="polynomial",newdata="polynomial"),
     function(object, newdata) {
         result <- polynomial(c(0))
-        for (i in 1:length(object@coef)) {
+        for (i in seq_len(length(object))) {
             result <- result + object@coef[i] * (newdata ^ (i-1))
         }
         return(result)
@@ -161,7 +168,7 @@ setMethod("as.function", "polynomial", function(x) function(xx) predict(x,xx))
 setMethod("as.character", "polynomial",
     function(x, xlab="x", digits = getOption("digits")) {
         eq <- ""
-        for (i in 1:length(x@coef)) {
+        for (i in seq_len(length(x))) {
             if (x@coef[i] != 0) {
                 if (i==1) {
                     eq <- paste(eq, signif(x@coef[i], digits), sep = "")

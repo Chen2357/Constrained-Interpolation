@@ -62,17 +62,16 @@ quadraticPatchInterpolate <- function(data, slope, patch = defaultPatchPolynomia
 
     if (!missing(slope)) {
         for (i in 1:(n-1)) {
-            polynomial[[i]] = patch(
+            polynomial[[i]] <- patch(
                 projectQuadratic(point.x(data)[i:(i+1)],point.y(data)[i:(i+1)],slope[i]),
                 projectQuadratic(point.x(data)[(i+1):i],point.y(data)[(i+1):i],slope[i+1]),
                 percentagePolynomial(point.x(data)[i],point.x(data)[i+1])
                 )
-            # validObject(polynomial[[i]])
         }
     } else {
         # Original interpolation method
-        polynomial[[1]] = quadraticPolynomial(point.x(data)[1:3],y(data)[1:3])
-        polynomial[[n-1]] = quadraticPolynomial(point.x(data)[n-2:n],y(data)[n-2:n])
+        polynomial[[1]] <- quadraticPolynomial(point.x(data)[1:3],y(data)[1:3])
+        polynomial[[n-1]] <- quadraticPolynomial(point.x(data)[n-2:n],y(data)[n-2:n])
         for (i in 2:(n-2)) {
             polynomial[[i]] = patch(
                 quadraticPolynomial(point.x(data)[(i-1):(i+1)],point.y(data)[(i-1):(i+1)]),

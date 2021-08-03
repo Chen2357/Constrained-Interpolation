@@ -4,9 +4,9 @@
 #' @param z The value at which the slope is evaluated.
 #' @return The slope of the quadratic that goes through \code{data[1:3]} at value \code{z}.
 threePointQuadraticSlope <- function(data,z) {
-    x = point.x(data)
-    y = point.y(data)
-    if (missing(z)) { z <- x[2] }
+    x <- point.x(data)
+    y <- point.y(data)
+    if (missing(z)) z <- x[2]
 
     return(
         (y[2]-y[1])/(x[2]-x[1]) + ((y[2]-y[1])/(x[2]-x[1])-(y[3]-y[2])/(x[3]-x[2]))/(x[1]-x[3]) * (2*z - x[1] - x[2])
