@@ -15,7 +15,7 @@ polynomial <- setClass("polynomial",
 
 setValidity("polynomial", function(object) {
     for (i in seq_len(length(object))) {
-        if(!is.numeric(object@coef[i]) || is.na(object@coef[i])) {
+        if (!is.numeric(object@coef[i]) || is.na(object@coef[i])) {
             print(object@coef)
             return("Polynomial coefficients must be numeric")
         }
@@ -88,7 +88,7 @@ setMethod("*", signature(e1 = "numeric", e2 = "polynomial"), function(e1, e2) re
 is.wholenumber <- function(x, tol = .Machine$double.eps^0.5)  abs(x - round(x)) < tol
 
 setMethod("^", signature(e1 = "polynomial", e2 = "numeric"), function(e1, e2) {
-    if(e2%%1 != 0) {
+    if (e2%%1 != 0) {
         warning("exponent must be an integer, caught ", e2)
         return(NULL)
     }
