@@ -11,7 +11,7 @@ library(limSolve)
 #' @return A list containing:
 #' `L`: the lower triangular matrix of the Cholseky decomposition
 #' `R`: the remainder matrix 
-cholesky <- function(x, tol = .Machine$double.eps^0.5) {
+cholesky <- function(x, tol = sqrt(.Machine$double.eps)) {
     L <- matrix(0, nrow = nrow(x), ncol = ncol(x))
     colnames(L) <- colnames(x)
     j <- 1
@@ -36,7 +36,7 @@ cholesky <- function(x, tol = .Machine$double.eps^0.5) {
 #' @return A list containing:
 #' `solution`: the desired `beta`, see main description
 #' `value`: the minimum value of `t(beta) %*% A %*% beta + ||beta||_1`
-solve.beta <- function(A, B, b, tol = .Machine$double.eps^0.5) {
+solve.beta <- function(A, B, b, tol = sqrt(.Machine$double.eps)) {
     min <- NA
     sol <- NA
 
@@ -59,7 +59,7 @@ solve.beta <- function(A, B, b, tol = .Machine$double.eps^0.5) {
 
         trueA <- M$L[1:6, 1:6]
         trueB <- -M$L[7, 1:6]
-        result <- lsei(trueA, trueB, Bhat, b, diag(6), rep(0, 6), verbose = FALSE)
+        result <- lsei(trueA, trueB, Bhat, b, diag(6), rep(0, 6), tol = tol, verbose = FALSE)
         if (result$IsError) next
 
         value <- result$solutionNorm + M$R[7,7]

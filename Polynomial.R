@@ -85,7 +85,7 @@ setMethod("*", signature(e1 = "polynomial", e2 = "numeric"), function(e1, e2) re
 
 setMethod("*", signature(e1 = "numeric", e2 = "polynomial"), function(e1, e2) return(polynomial(e1 * coef(e2))))
 
-is.wholenumber <- function(x, tol = .Machine$double.eps^0.5)  abs(x - round(x)) < tol
+is.wholenumber <- function(x, tol = sqrt(.Machine$double.eps))  abs(x - round(x)) < tol
 
 setMethod("^", signature(e1 = "polynomial", e2 = "numeric"), function(e1, e2) {
     if (e2%%1 != 0) {
