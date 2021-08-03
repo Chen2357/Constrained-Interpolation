@@ -73,7 +73,7 @@ quadraticPatchInterpolate <- function(data, slope, patch = defaultPatchPolynomia
         polynomial[[1]] <- quadraticPolynomial(point.x(data)[1:3],y(data)[1:3])
         polynomial[[n-1]] <- quadraticPolynomial(point.x(data)[n-2:n],y(data)[n-2:n])
         for (i in 2:(n-2)) {
-            polynomial[[i]] = patch(
+            polynomial[[i]] <- patch(
                 quadraticPolynomial(point.x(data)[(i-1):(i+1)],point.y(data)[(i-1):(i+1)]),
                 quadraticPolynomial(point.x(data)[i:(i+2)],point.y(data)[i:(i+2)]),
                 percentagePolynomial(point.x(data)[i],point.x(data)[i+1])
@@ -98,7 +98,7 @@ linearPatchInterpolate <- function(data, slope, patch = defaultPatchPolynomial) 
     polynomial <- vector(mode = "list", length = n-1)
 
     for (i in 1:(n-1)) {
-        polynomial[[i]] = patch(
+        polynomial[[i]] <- patch(
             y[i] + (slope[i] * polynomial(-x[i],1)),
             y[i+1] + (slope[i+1] * polynomial(-x[i+1],1)),
             percentagePolynomial(point.x(data)[i],point.x(data)[i+1])
