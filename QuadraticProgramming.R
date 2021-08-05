@@ -39,6 +39,7 @@ cholesky <- function(x, tol = sqrt(.Machine$double.eps)) {
 #' @param A A 6x6 symmetric postive-semidefinite matrix
 #' @param B A 6x6 matrix
 #' @param b A vector of 6 numbers
+#' @param tol Tolerance. Number whose absolute value is less than `tol` is considered 0.
 #' @return A list containing:
 #' `beta`: the desired `beta`, see main description
 #' `value`: the minimum value of `t(beta) %*% A %*% beta + ||beta||_1`
@@ -88,12 +89,15 @@ solve.beta.cholesky <- function(A, B, b, tol = sqrt(.Machine$double.eps)) {
 #' 
 #' Minimizes `x^T A x + x^T B` under equality constraint `E x = F` and inequality constraint `G x >= F`
 #' 
+#' @details Uses Karush-Kuhn-Tucker method internally.
+#' 
 #' @param A A symmetric matrix describing the quadratic coefficients
 #' @param B A vector describeing the linear coefficients
 #' @param E A matrix for equality constraint
 #' @param F A vector for equality constraint
 #' @param G A matrix for inequality constraint
 #' @param H A vector for inequality constraint
+#' @param tol Tolerance. Number whose absolute value is less than `tol` is considered 0.
 #' @return A list containing:
 #' `x`: the desired `x`, see main description
 #' `value`: the minimum value of `x^T A x + x^T B`
@@ -175,6 +179,7 @@ min.quadratic <- function(A, B, E = NULL, F = NULL, G = NULL, H = NULL, tol = sq
 #' @param A A 6x6 symmetric postive-semidefinite matrix
 #' @param B A 6x6 matrix
 #' @param b A vector of 6 numbers
+#' @param tol Tolerance. Number whose absolute value is less than `tol` is considered 0.
 #' @return A list containing:
 #' `beta`: the desired `beta`, see main description
 #' `value`: the minimum value of `t(beta) %*% A %*% beta + ||beta||_1`
