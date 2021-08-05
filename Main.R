@@ -11,16 +11,16 @@ y <- c(1,0,2,1,3)
 data <- pointData(x,y)
 
 # Example slope finding algorithms:
-# quadraticSlopeFind
-# constrainedQuadraticSlopeFind
-slope <- quadraticSlopeFind(data)
+# findSlope.quadratic
+# findSlope.constrainedQuadratic
+slope <- findSlope.quadratic(data)
 print(slope)
 
 # Example interpolation algorithms:
-# quadraticPatchInterpolate
-# linearPatchInterpolate
-# quadraticJointInterpolate
-interpolation <- quadraticPatchInterpolate(data, slope)
+# interpolate.patchQuadratic
+# interpolate.patchLinear
+# interpolate.joinLinear
+interpolation <- interpolate.patchQuadratic(data, slope)
 options(digits = 4)
 print(as.character(interpolation))
 print(as.data.frame(interpolation))

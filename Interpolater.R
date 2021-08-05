@@ -54,7 +54,7 @@ projectQuadratic <- function(x,y,s) {
 #' @param slope (Optional) The prescribed slopes at each points.
 #' @param patch The function used for patching, uses \code{defaultPatchPolynomial} by default.
 #' @return A piecewise polynomial.
-quadraticPatchInterpolate <- function(data, slope, patch = defaultPatchPolynomial) {
+interpolate.patchQuadratic <- function(data, slope, patch = defaultPatchPolynomial) {
     n <- length(data)
     leftBound <- point.x(data)[1:(n-1)]
     rightBound <- point.x(data)[2:n]
@@ -91,7 +91,7 @@ quadraticPatchInterpolate <- function(data, slope, patch = defaultPatchPolynomia
 #' @param slope  The prescribed slopes at each points.
 #' @param patch The function used for patching, uses \code{defaultPatchPolynomial} by default.
 #' @return A piecewise polynomial.
-linearPatchInterpolate <- function(data, slope, patch = defaultPatchPolynomial) {
+interpolate.patchLinear <- function(data, slope, patch = defaultPatchPolynomial) {
     n <- length(data)
     leftBound <- point.x(data)[1:(n-1)]
     rightBound <- point.x(data)[2:n]
@@ -115,7 +115,7 @@ linearPatchInterpolate <- function(data, slope, patch = defaultPatchPolynomial) 
 #' @param data A \code{pointData} type that stores all the points to be interpolated.
 #' @param slope  The prescribed slopes at each points.
 #' @return A piecewise polynomial.
-quadraticJointInterpolate <- function(data, slope) {
+interpolate.joinQuadratic <- function(data, slope) {
     n <- length(data)
     leftBound <- rep(NA, 2*n-2)
     rightBound <- rep(NA, 2*n-2)

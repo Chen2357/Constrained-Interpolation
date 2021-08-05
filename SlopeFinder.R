@@ -17,7 +17,7 @@ threePointQuadraticSlope <- function(data,z) {
 #' 
 #' @param data A \code{pointData} type.
 #' @return For each point, the slope of the quadratic function that goes though it and the adjacent two points.
-quadraticSlopeFind <- function(data) {
+findSlope.quadratic <- function(data) {
     n <- length(data)
     slope <- rep(NA, n)
     for (i in 1:n) {
@@ -37,8 +37,8 @@ quadraticSlopeFind <- function(data) {
 #' @param data A \code{pointData} type that stores two points where the former point is the point of interest.
 #' @return The slope at the point of interest such that the quadratic function going through the two points with the prescribed slope is nonnegative.
 constrainedQuadratic.minSlope <- function(data) {
-    x = point.x(data)
-    y = point.y(data)
+    x <- point.x(data)
+    y <- point.y(data)
 
     if (y[1] == 0) {
         return(0)
@@ -56,8 +56,8 @@ constrainedQuadratic.minSlope <- function(data) {
 #' @param data A \code{pointData} type that stores two points where the latter point is the point of interest.
 #' @return The slope at the point of interest such that the quadratic function going through the two points with the prescribed slope is nonnegative.
 constrainedQuadratic.maxSlope <- function(data) {
-    x = point.x(data)
-    y = point.y(data)
+    x <- point.x(data)
+    y <- point.y(data)
 
     if (y[2] == 0) {
         return(0)
@@ -76,7 +76,7 @@ constrainedQuadratic.maxSlope <- function(data) {
 #' 
 #' @param data A \code{pointData} type.
 #' @return For each point, the slope of the quadratic function that goes though it and the adjacent two points, but constrained such that the two quadratic functions extended from that point with the slope is always nonnegative.
-constrainedQuadraticSlopeFind <- function(data) {
+findSlope.constrainedQuadratic <- function(data) {
     n <- length(data)
     slope <- rep(NA, n)
     for (i in 1:n) {
