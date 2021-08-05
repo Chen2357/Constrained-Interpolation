@@ -202,7 +202,6 @@ solve.beta <- function(A, B, b, tol = sqrt(.Machine$double.eps)) {
         if (is.na(result)[1]) next
 
         if (is.na(min) | result$value < min) {
-            # print(Bhat %*% result$x)
             min <- result$value
             beta <- result$x
             I <- which(betaPostive[i, 1:6] == 0)
