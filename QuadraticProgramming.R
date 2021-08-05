@@ -40,9 +40,7 @@ cholesky <- function(x, tol = sqrt(.Machine$double.eps)) {
 #' @param B A 6x6 matrix
 #' @param b A vector of 6 numbers
 #' @param tol Tolerance. Number whose absolute value is less than `tol` is considered 0.
-#' @return A list containing:
-#' `beta`: the desired `beta`, see main description
-#' `value`: the minimum value of `t(beta) %*% A %*% beta + ||beta||_1`
+#' @return the desired `beta`, see main description
 #' @examples
 #' A <- diag(c(1 / 2, 1 / 3, 1 / 4, 1, 2, 3))
 #' B <- diag(c(2, 3, 6, 0, 0, 0))
@@ -76,13 +74,11 @@ solve.beta.cholesky <- function(A, B, b, tol = sqrt(.Machine$double.eps)) {
         value <- result$solutionNorm + M$R[7,7]
         if (is.na(min) | value < min) {
             min <- value
-            beta <- result$X
-            I <- which(betaPostive[i, 1:6] == 0)
-            if (length(I)>0) beta[I] <- -beta[I]
+            beta[(I-1) %% 6 + 1] <- result$x * ifelse(I > 6, -1, 1)
         }
     }
 
-    return(list(beta = beta, value = min))
+    return(beta)
 }
 
 #' Minimize Quadratic with Linear Constraints
@@ -180,9 +176,7 @@ min.quadratic <- function(A, B, E = NULL, F = NULL, G = NULL, H = NULL, tol = sq
 #' @param B A 6x6 matrix
 #' @param b A vector of 6 numbers
 #' @param tol Tolerance. Number whose absolute value is less than `tol` is considered 0.
-#' @return A list containing:
-#' `beta`: the desired `beta`, see main description
-#' `value`: the minimum value of `t(beta) %*% A %*% beta + ||beta||_1`
+#' @return the desired `beta`, see main description
 #' @examples
 #' A <- diag(c(1 / 2, 1 / 3, 1 / 4, 1, 2, 3))
 #' B <- diag(c(2, 3, 6, 0, 0, 0))
@@ -208,11 +202,9 @@ solve.beta <- function(A, B, b, tol = sqrt(.Machine$double.eps)) {
 
         if (is.na(min) | result$value < min) {
             min <- result$value
-            beta <- result$x
-            I <- which(betaPostive[i, 1:6] == 0)
-            if (length(I)>0) beta[I] <- -beta[I]
+            beta[(I-1) %% 6 + 1] <- result$x * ifelse(I > 6, -1, 1)
         }
     }
 
-    return(list(beta = beta, value = min))
+    return(beta)
 }
