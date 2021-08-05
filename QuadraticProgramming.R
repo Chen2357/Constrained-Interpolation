@@ -83,7 +83,7 @@ solve.beta.cholesky <- function(A, B, b, tol = sqrt(.Machine$double.eps)) {
 
 #' Minimize Quadratic with Linear Constraints
 #' 
-#' Minimizes `x^T A x + x^T B` under equality constraint `E x = F` and inequality constraint `G x >= F`
+#' Minimizes `x^T A x + x^T B` under equality constraint `E x = F` and inequality constraint `G x >= H`
 #' 
 #' @details Uses Karush-Kuhn-Tucker method internally.
 #' 
