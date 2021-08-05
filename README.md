@@ -2,7 +2,7 @@
 A 2021 summer research project
 
 # Todo
-- [ ] Implement [kkt.pdf](Resources/kkt.pdf)
+- [x] Implement [kkt.pdf](Resources/kkt.pdf)
 - [x] Calculate and plot derivative
 - [ ] Improve interface
   - [x] Documentation
