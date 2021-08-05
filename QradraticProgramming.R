@@ -1,5 +1,11 @@
 library(limSolve)
 
+setGeneric("symmetrize", function(x) standardGeneric("symmetrize"))
+setMethod("symmetrize", "matrix", function(x) {
+    x[lower.tri(x)] <- x[upper.tri(x)] <- (x[lower.tri(x)] + x[upper.tri(x)])/2
+    return(x)
+})
+
 #' Pseudo Cholesky Decomposition
 #' 
 #' Perform Cholesky decomposition with remainder, that is find `L` and `R` such that `x = L %*% t(L) + R` where there are as many 0 as possible in `R`.
@@ -30,13 +36,18 @@ cholesky <- function(x, tol = sqrt(.Machine$double.eps)) {
 #' 
 #' Find `beta` such that `t(beta) %*% A %*% beta + ||beta||_1` is minimzied subject to `B %*% beta = b`. `||beta||_1` is the 1-norm of `beta`
 #' 
-#' @param A A 6x6 postive-semidefinite matrix
+#' @param A A 6x6 symmetric postive-semidefinite matrix
 #' @param B A 6x6 matrix
 #' @param b A vector of 6 numbers
 #' @return A list containing:
 #' `solution`: the desired `beta`, see main description
 #' `value`: the minimum value of `t(beta) %*% A %*% beta + ||beta||_1`
-solve.beta <- function(A, B, b, tol = sqrt(.Machine$double.eps)) {
+#' @examples
+#' A <- diag(c(1 / 2, 1 / 3, 1 / 4, 1, 2, 3))
+#' B <- diag(c(2, 3, 6, 0, 0, 0))
+#' b <- c(1, 1, 1, 0, 0, 0)
+#' result <- solve.beta(A, B, b)
+solve.beta.cholesky <- function(A, B, b, tol = sqrt(.Machine$double.eps)) {
     min <- NA
     sol <- NA
 
@@ -51,7 +62,6 @@ solve.beta <- function(A, B, b, tol = sqrt(.Machine$double.eps)) {
         Ahat <- fullAhat[I, I]
         Bhat <- cbind(B, -B)[, I]
 
-        Ahat[lower.tri(Ahat)] <- Ahat[upper.tri(Ahat)] <- (Ahat[lower.tri(Ahat)] + Ahat[upper.tri(Ahat)])/2
         Ahat <- rbind(cbind(Ahat, rep(0.5, 6)), t(c(rep(0.5, 6),0)))
         
         M <- cholesky(Ahat, tol = tol)
@@ -73,8 +83,3 @@ solve.beta <- function(A, B, b, tol = sqrt(.Machine$double.eps)) {
 
     return(list(solution = sol, value = min))
 }
-
-A <- diag(c(1 / 2, 1 / 3, 1 / 4, 1, 2, 3))
-B <- diag(c(2, 3, 6, 0, 0, 0))
-b <- c(1, 1, 1, 0, 0, 0)
-result <- solve.beta(A, B, b)
