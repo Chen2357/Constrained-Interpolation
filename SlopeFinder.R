@@ -108,7 +108,7 @@ findSlope.beta.threePoints <- function(data, x = point.x(data), y = point.y(data
 
     # L_cluster matrix
     # d21^(-2)  0           -d21^(-2)   d21^(-1)    0           0
-    # 0         0           -d32^(-2)   0           -d32^(-2)   -d32^(-1)
+    # 0         0           d32^(-2)    0           -d32^(-2)   d32^(-1)
     # 0         0           0           0           1           0
     # 0         d21^(-1)    0           -d21^(-1)   0           0
     # 0         0           0           d32^(-1)    0           -d32^(-1)
@@ -116,10 +116,10 @@ findSlope.beta.threePoints <- function(data, x = point.x(data), y = point.y(data
     L <- matrix(c(
         delta21^(-2),0,0,0,0,0,
         0,0,0,delta21^(-1),0,0,
-        -delta21^(-2),-delta32^(-2),0,0,0,0,
+        -delta21^(-2),delta32^(-2),0,0,0,0,
         delta21^(-1),0,0,-delta21^(-1),delta32^(-1),0,
         0,-delta32^(-2),1,0,0,0,
-        0,-delta32^(-1),0,0,-delta32^(-1),1),
+        0,delta32^(-1),0,0,-delta32^(-1),1),
         nrow = 6, ncol = 6
     )
 
@@ -135,6 +135,6 @@ findSlope.beta.threePoints <- function(data, x = point.x(data), y = point.y(data
 
     beta <- betaSolver(A = A, B = B, b = b)
     p <- L_inv %*% beta
-    print(p)
+
     return(p[c(2,4,6)])
 }
