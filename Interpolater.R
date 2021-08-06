@@ -50,7 +50,7 @@ projectQuadratic <- function(x,y,s) {
 #' @param data A `pointData` type containing a signle point. It will be converted to `x` and `y`
 #' @param x The x-coordinate of a point. May be assigned directly.
 #' @param y The y-coordinate of a point. May be assigned directly.
-#' @param k The slope at point `(x,y)``
+#' @param slope The slope at point `(x,y)``
 #' @param extreme The y-value of the extrema.
 #' @return The quadratic that goes through `(x,y)` with slope `k` and tangent to the `y=extrema`.
 quadratic.point.slope.extrema <- function(data, x = point.x(data), y = point.y(data), slope, extrema = 0, tol = sqrt(.Machine$double.eps)) {
@@ -77,8 +77,8 @@ interpolate.patchQuadratic <- function(data, slope, patch = defaultPatchPolynomi
     if (!missing(slope)) {
         for (i in 1:(n-1)) {
             polynomial[[i]] <- patch(
-                quadratic.point.slope.extrema(data[i], k = slope[i]),
-                quadratic.point.slope.extrema(data[i+1], k = slope[i+1]),
+                quadratic.point.slope.extrema(data[i], slope = slope[i]),
+                quadratic.point.slope.extrema(data[i+1], slope = slope[i+1]),
                 percentagePolynomial(point.x(data)[i],point.x(data)[i+1])
             )
             # polynomial[[i]] <- patch(
