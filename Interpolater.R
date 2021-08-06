@@ -45,6 +45,19 @@ projectQuadratic <- function(x,y,s) {
     y[1] + (s * polynomial(c(-x[1],1))) + ( ((y[2]-y[1]-s*(x[2]-x[1]))/((x[2]-x[1])^2)) * polynomial(c(x[1]^2,-2*x[1],1)) )
 }
 
+#' Quadratic Function Through a Point and with a Given Slope and with Given y-value of Extrema
+#' 
+#' @param data A `pointData` type containing a signle point. It will be converted to `x` and `y`
+#' @param x The x-coordinate of a point. May be assigned directly.
+#' @param y The y-coordinate of a point. May be assigned directly.
+#' @param k The slope at point `(x,y)``
+#' @param extreme The y-value of the extrema.
+#' @return The quadratic that goes through `(x,y)` with slope `k` and tangent to the `y=extrema`.
+quadratic.point.slope.extrema <- function(data, x = point.x(data), y = point.y(data), slope, extrema = 0, tol = sqrt(.Machine$double.eps)) {
+    if(abs(y-extrema) < tol) return(polynomial(y))
+    slope^2/(4*(y-extrema))*polynomial(c(x^2,-2*x,1)) + slope * polynomial(c(-x,1)) + y
+}
+
 #' Interpolation by Patching Quadratic Functions
 #' 
 #' Between any adjacent two points, the interpolated function is constructed by patching the two quadratic functions that go through the two points with the prescibed slope at each respective point.
@@ -64,10 +77,15 @@ interpolate.patchQuadratic <- function(data, slope, patch = defaultPatchPolynomi
     if (!missing(slope)) {
         for (i in 1:(n-1)) {
             polynomial[[i]] <- patch(
-                projectQuadratic(point.x(data)[i:(i+1)],point.y(data)[i:(i+1)],slope[i]),
-                projectQuadratic(point.x(data)[(i+1):i],point.y(data)[(i+1):i],slope[i+1]),
+                quadratic.point.slope.extrema(data[i], k = slope[i]),
+                quadratic.point.slope.extrema(data[i+1], k = slope[i+1]),
                 percentagePolynomial(point.x(data)[i],point.x(data)[i+1])
-                )
+            )
+            # polynomial[[i]] <- patch(
+            #     projectQuadratic(point.x(data)[i:(i+1)],point.y(data)[i:(i+1)],slope[i]),
+            #     projectQuadratic(point.x(data)[(i+1):i],point.y(data)[(i+1):i],slope[i+1]),
+            #     percentagePolynomial(point.x(data)[i],point.x(data)[i+1])
+            # )
         }
     } else {
         # Original interpolation method
@@ -144,10 +162,10 @@ interpolate.joinQuadratic <- function(data, slope) {
 #' Interpolation by Patching Three Points Segments
 #' 
 #' @param data A `pointData` type that stores all the points to be interpolated.
-#' @param threePointSolver Function that returns a polynomial that interpolate 3 points, must be in the form of \code{function(data)}.
+#' @param solver Function that returns a polynomial that interpolate 3 points, must be in the form of \code{function(data)}.
 #' @param patch The function used for patching, uses `defaultPatchPolynomial` by default. Must be in the form of `function(a,b,p)`.
 #' @return A piecewise polynomial.
-interpolate.patch.threePoint <- function(data, threePointSolver, patch = defaultPatchPolynomial) {
+interpolate.patch.threePoint <- function(data, solver, patch = defaultPatchPolynomial) {
     if (length(data) < 3) stop("`data` must have length greater than 3")
 
     n <- length(data)
@@ -155,14 +173,36 @@ interpolate.patch.threePoint <- function(data, threePointSolver, patch = default
     rightBound <- point.x(data)[2:n]
     polynomial <- vector(mode = "list", length = n-1)
 
-    polynomial[[1]] <- threePointSolver(data[1:3])
-    polynomial[[n-1]] <- threePointSolver(data[(n-2):n])
+    polynomial[[1]] <- solver(data[1:3])
+    polynomial[[n-1]] <- solver(data[(n-2):n])
     for (i in 2:(n-2)) {
         polynomial[[i]] <- patch(
-            threePointSolver(data[(i-1):(i+1)]),
-            threePointSolver(data[i:(i+2)]),
+            solver(data=data[(i-1):(i+1)]),
+            solver(data=data[i:(i+2)]),
             percentagePolynomial(point.x(data)[i],point.x(data)[i+1])
-            )
+        )
+    }
+
+    return(piecewisePolynomial(leftBound, rightBound, polynomial))
+}
+
+#' Interpolation by Patching Three Points Segments
+#' 
+#' @param data A `pointData` type that stores all the points to be interpolated.
+#' @param solver Function that returns a polynomial that interpolate 3 points, must be in the form of \code{function(data)}.
+#' @param patch The function used for patching, uses `defaultPatchPolynomial` by default. Must be in the form of `function(a,b,p)`.
+#' @return A piecewise polynomial.
+interpolate.patch.onePointSlope <- function(data, slopes, solver, patch = defaultPatchPolynomial) {
+    n <- length(data)
+    leftBound <- point.x(data)[1:(n-1)]
+    rightBound <- point.x(data)[2:n]
+    polynomial <- vector(mode = "list", length = n-1)
+
+    previousPoly <- solver(data = data[1], slope = slopes[1])
+    for (i in 1:(n-1)) {
+        thisPoly <- solver(data = data[i+1], slope = slopes[i+1])
+        polynomial[[i]] <- patch(previousPoly, thisPoly, percentagePolynomial(leftBound[i], rightBound[i]))
+        previousPoly <- thisPoly
     }
 
     return(piecewisePolynomial(leftBound, rightBound, polynomial))
