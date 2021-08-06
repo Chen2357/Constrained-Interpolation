@@ -58,6 +58,7 @@ quadratic.point.slope.extrema <- function(data, x = point.x(data), y = point.y(d
     slope^2/(4*(y-extrema))*polynomial(c(x^2,-2*x,1)) + slope * polynomial(c(-x,1)) + y
 }
 
+## ANCHOR Obsolete functions
 #' Interpolation by Patching Quadratic Functions
 #' 
 #' Between any adjacent two points, the interpolated function is constructed by patching the two quadratic functions that go through the two points with the prescibed slope at each respective point.
@@ -76,16 +77,16 @@ interpolate.patchQuadratic <- function(data, slope, patch = defaultPatchPolynomi
 
     if (!missing(slope)) {
         for (i in 1:(n-1)) {
-            polynomial[[i]] <- patch(
-                quadratic.point.slope.extrema(data[i], slope = slope[i]),
-                quadratic.point.slope.extrema(data[i+1], slope = slope[i+1]),
-                percentagePolynomial(point.x(data)[i],point.x(data)[i+1])
-            )
             # polynomial[[i]] <- patch(
-            #     projectQuadratic(point.x(data)[i:(i+1)],point.y(data)[i:(i+1)],slope[i]),
-            #     projectQuadratic(point.x(data)[(i+1):i],point.y(data)[(i+1):i],slope[i+1]),
+            #     quadratic.point.slope.extrema(data[i], slope = slope[i]),
+            #     quadratic.point.slope.extrema(data[i+1], slope = slope[i+1]),
             #     percentagePolynomial(point.x(data)[i],point.x(data)[i+1])
             # )
+            polynomial[[i]] <- patch(
+                projectQuadratic(point.x(data)[i:(i+1)],point.y(data)[i:(i+1)],slope[i]),
+                projectQuadratic(point.x(data)[(i+1):i],point.y(data)[(i+1):i],slope[i+1]),
+                percentagePolynomial(point.x(data)[i],point.x(data)[i+1])
+            )
         }
     } else {
         # Original interpolation method
@@ -159,10 +160,11 @@ interpolate.joinQuadratic <- function(data, slope) {
     return(piecewisePolynomial(leftBound, rightBound, polynomial))
 }
 
+## ANCHOR Flexible interpolation (New)
 #' Interpolation by Patching Three Points Segments
 #' 
 #' @param data A `pointData` type that stores all the points to be interpolated.
-#' @param solver Function that returns a polynomial that interpolate 3 points, must be in the form of \code{function(data)}.
+#' @param solver Function that returns a polynomial that interpolate 3 points, must be in the form of `function(data)`.
 #' @param patch The function used for patching, uses `defaultPatchPolynomial` by default. Must be in the form of `function(a,b,p)`.
 #' @return A piecewise polynomial.
 interpolate.patch.threePoint <- function(data, solver, patch = defaultPatchPolynomial) {
@@ -175,21 +177,21 @@ interpolate.patch.threePoint <- function(data, solver, patch = defaultPatchPolyn
 
     polynomial[[1]] <- solver(data[1:3])
     polynomial[[n-1]] <- solver(data[(n-2):n])
+    previousPoly <- polynomial[[1]]
     for (i in 2:(n-2)) {
-        polynomial[[i]] <- patch(
-            solver(data=data[(i-1):(i+1)]),
-            solver(data=data[i:(i+2)]),
-            percentagePolynomial(point.x(data)[i],point.x(data)[i+1])
-        )
+        thisPoly <- solver(data=data[i:(i+2)])
+        polynomial[[i]] <- patch(previousPoly, thisPoly, percentagePolynomial(point.x(data)[i],point.x(data)[i+1]))
+        previousPoly <- thisPoly
     }
 
     return(piecewisePolynomial(leftBound, rightBound, polynomial))
 }
 
-#' Interpolation by Patching Three Points Segments
+#' Interpolation by Patching Functions Generated at Each Point
 #' 
 #' @param data A `pointData` type that stores all the points to be interpolated.
-#' @param solver Function that returns a polynomial that interpolate 3 points, must be in the form of \code{function(data)}.
+#' @param slopes A `vector` type that stores all the slopes correspond to each point.
+#' @param solver Function that returns a polynomial that is generated at a point with slope. Must be in the form of `function(data, slope)`.
 #' @param patch The function used for patching, uses `defaultPatchPolynomial` by default. Must be in the form of `function(a,b,p)`.
 #' @return A piecewise polynomial.
 interpolate.patch.onePointSlope <- function(data, slopes, solver, patch = defaultPatchPolynomial) {
@@ -203,6 +205,41 @@ interpolate.patch.onePointSlope <- function(data, slopes, solver, patch = defaul
         thisPoly <- solver(data = data[i+1], slope = slopes[i+1])
         polynomial[[i]] <- patch(previousPoly, thisPoly, percentagePolynomial(leftBound[i], rightBound[i]))
         previousPoly <- thisPoly
+    }
+
+    return(piecewisePolynomial(leftBound, rightBound, polynomial))
+}
+
+#' Interpolation by Joining Functions of Each segments
+#' 
+#' @param data A `pointData` type that stores all the points to be interpolated.
+#' #' @param slopes A `vector` type that stores all the slopes correspond to each point.
+#' @param solver Function that returns a polynomial that connect two points with respective slopes. Must be in the form of `function(data, slopes)`.
+#' @param ... Additional parameters passed into `solver`.
+#' @return A piecewise polynomial.
+interpolate.twoPointSlope <- function(data, slopes, solver, ...) {
+    n <- length(data)
+    leftBound <- c()
+    rightBound <- c()
+    polynomial <- list()
+
+    for (i in 1:(n-1)) {
+        result <- solver(data = data[i:(i+1)], slopes = slopes[i:(i+1)], ...)
+        if (class(result) == "piecewisePolynomial") {
+            leftBound <- c(leftBound, result@leftBound)
+            rightBound <- c(rightBound, result@rightBound)
+            polynomial <- append(polynomial, result@polynomial)
+        } else if (class(result) == "polynomial") {
+            leftBound <- c(leftBound, point.x(data)[i])
+            rightBound <- c(rightBound, point.x(data)[i+1])
+            polynomial <- append(polynomial, result)
+        } else if (class(result) == "numeric") {
+            leftBound <- c(leftBound, point.x(data)[i])
+            rightBound <- c(rightBound, point.x(data)[i+1])
+            polynomial <- append(polynomial, polynomial(result))
+        } else {
+            stop(paste("Unrecognized return class of solver", class(result)))
+        }
     }
 
     return(piecewisePolynomial(leftBound, rightBound, polynomial))
