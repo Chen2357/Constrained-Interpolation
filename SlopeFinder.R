@@ -125,11 +125,8 @@ findSlope.beta.threePoints <- function(data, x = point.x(data), y = point.y(data
 
     L_inv <- Solve(L)
 
-    # L_phi <- diag(c(0, 1/(2*sqrt(y[1])), 0, 1/(2*sqrt(y[2])), 0, 1/(2*sqrt(y[3]))))
-    # A <- t(L_phi) %*% L_phi
-
-    temp <- ifelse(y!=0, 1/(4*y), 0)
-    A <- diag(c(0, temp[1], 0, temp[2], 0, temp[3]))
+    temp <- ifelse(y==0, 0, 1/(4*y))
+    A <- t(L_inv) %*% diag(c(0, temp[1], 0, temp[2], 0, temp[3])) %*% L_inv
     
     temp <- ifelse(y==0, 1, 0)
     B <- diag(c(1, temp[1], 1, temp[2], 1, temp[3])) %*% L_inv
