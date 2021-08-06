@@ -122,7 +122,7 @@ min.quadratic <- function(A, B, E = NULL, F = NULL, G = NULL, H = NULL, tol = sq
             cbind(E, matrix(0,nrow=nrow(E),ncol=nrow(E)))
         )
 
-        X <- limSolve::Solve(M, c(B, F))
+        X <- limSolve::Solve(M, c(B, F), tol = tol)
         if (any(abs(M %*% X - c(B, F)) > tol)) return(NA)
         x <- X[seq_len(length(B))]
         value <- (t(x) %*% A %*% x + x %*% B)[1,1]
