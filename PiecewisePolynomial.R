@@ -114,3 +114,62 @@ setMethod("show", "piecewisePolynomial",
         print(as.character(object))
     }
 )
+
+# ANCHOR Extrema Functions
+
+#' Finding the x-values of Extrema of a Piecewise Polynomial
+#' 
+#' @param poly A `piecewisePolynomial` type.
+#' @param tol Tolerance.
+#' @return A vector containing the x-values of the extrema.
+piecewisePolynomial.extrema.x <- function(poly, tol = sqrt(.Machine$double.eps)) {
+    point.x(piecewisePolynomial.extrema(poly, tol))
+}
+
+#' Finding the y-values of Extrema of a Piecewise Polynomial
+#' 
+#' @param poly A `piecewisePolynomial` type.
+#' @param tol Tolerance.
+#' @return A vector containing the y-values of the extrema.
+polynomial.extrema.y <- function(poly, tol = sqrt(.Machine$double.eps)) {
+    point.y(piecewisePolynomial.extrema(poly, tol))
+}
+
+#' Finding the Extrema of a Piecewise Polynomial
+#' 
+#' The ranges in this Piecewise Polynomial must be ordered.
+#' The boundary points are also includede in the result.
+#' 
+#' @param poly A `piecewisePolynomial` type.
+#' @param tol Tolerance.
+#' @return A `pointData` type containing the extrema points.
+piecewisePolynomial.extrema <- function(poly, tol = sqrt(.Machine$double.eps)) {
+    x <- poly@leftBound[1]
+    y <- predict(poly@polynomial[1], poly@leftBound[1])
+
+    for (i in seq_len(length(poly))) {
+        extrema <- polynomial.extrema(poly@polynomial[[i]])
+        I <- ((point.x(extrema) > poly@leftBound[i] + tol) & (point.x(extrema) < poly@rightBound[i] - tol))
+        x <- c(x, point.x(extrema)[i])
+        y <- c(y, point.y(extrema)[i])
+
+        if (i < length(poly)) {
+            x1 <- poly@rightBound[i]
+            x2 <- poly@leftBound[i+1]
+            y1 <- predict(poly@polynomial[i], poly@rightBound[i])
+            y2 <- predict(poly@polynomial[i+1], poly@leftBound[i+1])
+            if ((x2 - x1 < tol) & (abs(y2 - y1) < tol)) {
+                x <- c(x, x1)
+                y <- c(y, y1)
+            } else {
+                x <- c(x, x1, x2)
+                y <- c(y, y1, y2)
+            }
+        } else {
+            x <- c(x, poly@rightBound[i])
+            y <- c(y, predict(poly@polynomial[i], poly@rightBound[i]))
+        }
+    }
+
+    return(pointData(x, y))
+}

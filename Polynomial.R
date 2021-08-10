@@ -186,3 +186,46 @@ setMethod("show", "polynomial",
         print(as.character(object))
     }
 )
+
+# ANCHOR Extrema Functions
+
+#' Finding the x-values of Extrema of a Polynomial
+#' 
+#' @param poly A `polynomial` type.
+#' @param tol Tolerance.
+#' @return A vector containing the x-values of the extrema.
+polynomial.extrema.x <- function(poly, tol = sqrt(.Machine$double.eps)) {
+    r <- polyroot(coef(differentiate(poly)))
+    r <- Re(r[abs(Im(r)) < tol])
+    i <- 1
+    while(i <= length(r)) {
+        I <- (abs(r - r[i]) < tol)
+        if (sum(I) %% 2 == 1) {
+            r <- r[!I | (seq_len(length(r)) == i)]
+            i <- i + 1
+        } else {
+            r <- r[!I]
+        }
+    }
+    return(r)
+}
+
+#' Finding the y-values of Extrema of a Polynomial
+#' 
+#' @param poly A `polynomial` type.
+#' @param tol Tolerance.
+#' @return A vector containing the y-values of the extrema.
+polynomial.extrema.y <- function(poly, tol = sqrt(.Machine$double.eps)) {
+    predict(poly, polynomial.extrema.x(poly, tol))
+}
+
+#' Finding the Extrema of a Polynomial
+#' 
+#' @param poly A `polynomial` type.
+#' @param tol Tolerance.
+#' @return A `pointData` type containing the extrema points.
+polynomial.extrema <- function(poly, tol = sqrt(.Machine$double.eps)) {
+    x <- polynomial.extrema.x(poly, tol)
+    y <- predict(poly, x)
+    return(pointData(x, y))
+}
