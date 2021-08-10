@@ -56,10 +56,18 @@ setMethod("[", "pointData", function(x,i,...) pointData(x=point.x(x)[i],y=point.
 
 setMethod("initialize", "pointData",
     function(.Object, x, y) {
-        .Object@x <- x
-        .Object@y <- y
+        if (class(x) == "pointData" & class(y) == "pointData") {
+            .Object@x <- sort(c(x@x, y@x))
+            .Object@y <- sort(c(x@y, y@y))
 
-        validObject(.Object)
-        return(.Object)
+            validObject(.Object)
+            return(.Object)
+        } else {
+            .Object@x <- x
+            .Object@y <- y
+
+            validObject(.Object)
+            return(.Object)
+        }
     }
 )
