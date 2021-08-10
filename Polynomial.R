@@ -142,24 +142,23 @@ setMethod("initialize", "polynomial",
 setGeneric("differentiate", function(x) standardGeneric("differentiate"))
 setMethod("differentiate", "polynomial", function(x) polynomial(coef(x)[-1] * 1:degree(x)))
 
-setGeneric("predict", function(object,newdata) standardGeneric("predict"))
-setMethod("predict", signature(object="polynomial",newdata="numeric"),
+setMethod("predict", signature(object="polynomial"),
     function(object, newdata) {
-        result <- rep(0, length(newdata))
-        for (i in seq_len(length(object))) {
-            result <- result + object@coef[i] * newdata ^ (i-1)
+        if (class(newdata) == "numeric") {
+            result <- rep(0, length(newdata))
+            for (i in seq_len(length(object))) {
+                result <- result + object@coef[i] * newdata ^ (i-1)
+            }
+            return(result)
+        } else if (class(newdata) == "polynomial") {
+            result <- polynomial(c(0))
+            for (i in seq_len(length(object))) {
+                result <- result + object@coef[i] * (newdata ^ (i-1))
+            }
+            return(result)
+        } else {
+            stop("Unsupprted newdata class in predict where object is polynomial")
         }
-        return(result)
-    }
-)
-
-setMethod("predict", signature(object="polynomial",newdata="polynomial"),
-    function(object, newdata) {
-        result <- polynomial(c(0))
-        for (i in seq_len(length(object))) {
-            result <- result + object@coef[i] * (newdata ^ (i-1))
-        }
-        return(result)
     }
 )
 

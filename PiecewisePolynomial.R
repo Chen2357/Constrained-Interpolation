@@ -37,14 +37,18 @@ setValidity("piecewisePolynomial", function(object) {
 
 setMethod("length", "piecewisePolynomial", function(x) length(x@leftBound))
 
-setMethod("predict", signature(object="piecewisePolynomial",newdata="numeric"),
+setMethod("predict", signature(object="piecewisePolynomial"),
     function(object,newdata) {
-        y <- rep(NA, length(newdata))
-        for(i in seq_len(length(object))) {
-            indices <- which(object@leftBound[i] <= newdata & newdata <= object@rightBound[i])
-            y[indices] = predict(object@polynomial[[i]],newdata[indices])
+        if (class(newdata) == "numeric") {
+            y <- rep(NA, length(newdata))
+            for(i in seq_len(length(object))) {
+                indices <- which(object@leftBound[i] <= newdata & newdata <= object@rightBound[i])
+                y[indices] = predict(object@polynomial[[i]],newdata[indices])
+            }
+            return(y)
+        } else {
+            stop("Unsupprted newdata class in predict where object is piecewisePolynomial")
         }
-        return(y)
     }
 )
 
