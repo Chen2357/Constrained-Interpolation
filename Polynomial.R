@@ -207,6 +207,7 @@ polynomial.extrema.x <- function(poly, tol = sqrt(.Machine$double.eps)) {
             r <- r[!I]
         }
     }
+    r <- sort(r)
     return(r)
 }
 
