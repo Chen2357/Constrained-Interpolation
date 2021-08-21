@@ -30,7 +30,7 @@ percentagePolynomial <- function(min,max) {
 #' @param y The vector of y-coordinates. May be assigned directly.
 #' @return The quadratic polynomial that goes through \code{(x[1],y[1])}, \code{(x[2],y[2])}, and \code{(x[3],y[3])}.
 quadraticPolynomial <- function(data, x = point.x(data), y = point.y(data)) {
-    y[1] + ( ((y[2]-y[1])/(x[2]-x[1])) * polynomial(c(-x[1],10)) ) + ( (((y[2]-y[1])/(x[2]-x[1])-(y[3]-y[2])/(x[3]-x[2]))/(x[1]-x[3])) * polynomial(c(-x[1],1)) * polynomial(c(-x[2],1)) )
+    y[1] + ( ((y[2]-y[1])/(x[2]-x[1])) * polynomial(c(-x[1],1)) ) + ( (((y[2]-y[1])/(x[2]-x[1])-(y[3]-y[2])/(x[3]-x[2]))/(x[1]-x[3])) * polynomial(c(-x[1],1)) * polynomial(c(-x[2],1)) )
 }
 
 #' Quadratic Function Through Two Points with Given Slope
