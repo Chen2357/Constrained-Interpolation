@@ -18,11 +18,9 @@ pointData  <- setClass("pointData",
 
 setValidity("pointData", function(object) {
     if (length(object@x) != length(object@y)) {
-        "Numbers of x and y data are mismatched"
-    } else if (is.unsorted(object@x)) {
-        "x must be sorted"
+        return("Numbers of x and y data are mismatched")
     } else {
-        TRUE
+        return(TRUE)
     }
 })
 
