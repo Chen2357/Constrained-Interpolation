@@ -195,6 +195,13 @@ setMethod("*", signature(e1 = "numeric", e2 = "piecewisePolynomial"), function(e
     return(e2)
 })
 
+setGeneric("%+%", function(e1, e2) standardGeneric("%+%"))
+setMethod("%+%", signature(e1 = "piecewisePolynomial", e2 = "piecewisePolynomial"), function(e1, e2) {
+    result <- piecewisePolynomial(c(e1@leftBound, e2@leftBound), c(e1@rightBound, e2@rightBound), c(e1@polynomial, e2@polynomial))
+    validObject(result)
+    return(result)
+})
+
 ## ANCHOR Generics
 
 setMethod("length", "piecewisePolynomial", function(x) length(x@leftBound))
@@ -205,7 +212,7 @@ setMethod("predict", signature(object="piecewisePolynomial"),
             y <- rep(NA, length(newdata))
             for(i in seq_len(length(object))) {
                 indices <- which(object@leftBound[i] <= newdata & newdata <= object@rightBound[i])
-                y[indices] = predict(object@polynomial[[i]],newdata[indices])
+                y[indices] <- predict(object@polynomial[[i]],newdata[indices])
             }
             return(y)
         } else {
