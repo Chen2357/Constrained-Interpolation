@@ -277,6 +277,25 @@ setMethod("show", "piecewisePolynomial",
     }
 )
 
+setGeneric("as.piecewisePolynomial", function(object, leftBound, rightBound) standardGeneric("as.piecewisePolynomial"))
+setMethod("as.piecewisePolynomial", signature(object = "polynomial", leftBound = "numeric", rightBound = "numeric"), function(object, leftBound, rightBound) piecewisePolynomial(leftBound, rightBound, list(object)))
+
+setMethod("as.piecewisePolynomial", signature(object = "piecewisePolynomial", leftBound = "numeric", rightBound = "numeric"), function(object, leftBound, rightBound) {
+    leftBounds <- c()
+    rightBounds <- c()
+    polynomial <- list()
+    
+    for (i in seq_len(length(object))) {
+        if (object@leftBound[i] < rightBound & object@rightBound[i] > leftBound) {
+            leftBounds <- c(leftBounds, max(object@leftBound[i], leftBound))
+            rightBounds <- c(rightBounds, min(object@rightBound[i], rightBound))
+            polynomial <- c(polynomial, object@polynomial[[i]])
+        }
+    }
+
+    return(piecewisePolynomial(leftBounds, rightBounds, polynomial))
+})
+
 # ANCHOR Extrema Functions
 
 #' Finding the x-values of Extrema of a Piecewise Polynomial
