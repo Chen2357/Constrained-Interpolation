@@ -152,19 +152,19 @@ setMethod("+", signature(e1 = "piecewisePolynomial", e2 = "piecewisePolynomial")
     combinePiecewisePolynomial(`+`, e1, e2)
 })
 setMethod("+", signature(e1 = "piecewisePolynomial", e2 = "polynomial"), function(e1, e2) {
-    e1@polynomial <- Map(`+`, e1@polynomial, e2)
+    e2@polynomial <- lapply(e1@polynomial, function(x) x + e2)
     return(e1)
 })
 setMethod("+", signature(e1 = "piecewisePolynomial", e2 = "numeric"), function(e1, e2) {
-    e1@polynomial <- Map(`+`, e1@polynomial, e2)
+    e2@polynomial <- lapply(e1@polynomial, function(x) x + e2)
     return(e1)
 })
 setMethod("+", signature(e1 = "polynomial", e2 = "piecewisePolynomial"), function(e1, e2) {
-    e2@polynomial <- Map(`+`, e1, e2@polynomial)
+    e2@polynomial <- lapply(e2@polynomial, function(x) e1 + x)
     return(e2)
 })
 setMethod("+", signature(e1 = "numeric", e2 = "piecewisePolynomial"), function(e1, e2) {
-    e2@polynomial <- Map(`+`, e1, e2@polynomial)
+    e2@polynomial <- lapply(e2@polynomial, function(x) e1 + x)
     return(e2)
 })
 
@@ -173,19 +173,19 @@ setMethod("*", signature(e1 = "piecewisePolynomial", e2 = "piecewisePolynomial")
     combinePiecewisePolynomial(`*`, e1, e2)
 })
 setMethod("*", signature(e1 = "piecewisePolynomial", e2 = "polynomial"), function(e1, e2) {
-    e1@polynomial <- Map(`*`, e1@polynomial, e2)
+    e2@polynomial <- lapply(e1@polynomial, function(x) x * e2)
     return(e1)
 })
 setMethod("*", signature(e1 = "piecewisePolynomial", e2 = "numeric"), function(e1, e2) {
-    e1@polynomial <- Map(`*`, e1@polynomial, e2)
+    e2@polynomial <- lapply(e1@polynomial, function(x) x * e2)
     return(e1)
 })
 setMethod("*", signature(e1 = "polynomial", e2 = "piecewisePolynomial"), function(e1, e2) {
-    e2@polynomial <- Map(`*`, e1, e2@polynomial)
+    e2@polynomial <- lapply(e2@polynomial, function(x) e1 * x)
     return(e2)
 })
 setMethod("*", signature(e1 = "numeric", e2 = "piecewisePolynomial"), function(e1, e2) {
-    e2@polynomial <- Map(`*`, e1, e2@polynomial)
+    e2@polynomial <- lapply(e2@polynomial, function(x) e1 * x)
     return(e2)
 })
 
@@ -194,19 +194,19 @@ setMethod("-", signature(e1 = "piecewisePolynomial", e2 = "piecewisePolynomial")
     combinePiecewisePolynomial(`-`, e1, e2)
 })
 setMethod("-", signature(e1 = "piecewisePolynomial", e2 = "polynomial"), function(e1, e2) {
-    e1@polynomial <- Map(`-`, e1@polynomial, e2)
+    e2@polynomial <- lapply(e1@polynomial, function(x) x - e2)
     return(e1)
 })
 setMethod("-", signature(e1 = "piecewisePolynomial", e2 = "numeric"), function(e1, e2) {
-    e1@polynomial <- Map(`-`, e1@polynomial, e2)
+    e2@polynomial <- lapply(e1@polynomial, function(x) x - e2)
     return(e1)
 })
 setMethod("-", signature(e1 = "polynomial", e2 = "piecewisePolynomial"), function(e1, e2) {
-    e2@polynomial <- Map(`-`, e1, e2@polynomial)
+    e2@polynomial <- lapply(e2@polynomial, function(x) e1 - x)
     return(e2)
 })
 setMethod("-", signature(e1 = "numeric", e2 = "piecewisePolynomial"), function(e1, e2) {
-    e2@polynomial <- Map(`*`, e1, e2@polynomial)
+    e2@polynomial <- lapply(e2@polynomial, function(x) e1 - x)
     return(e2)
 })
 
