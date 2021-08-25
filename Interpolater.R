@@ -109,20 +109,21 @@ interpolate.patch.threePoint <- function(data, solver, patch = defaultPatchPolyn
     if (length(data) < 3) stop("`data` must have length greater than 3")
 
     n <- length(data)
-    leftBound <- point.x(data)[1:(n-1)]
-    rightBound <- point.x(data)[2:n]
-    polynomial <- vector(mode = "list", length = n-1)
+    x <- point.x(data)
 
-    polynomial[[1]] <- solver(data[1:3])
-    polynomial[[n-1]] <- solver(data[(n-2):n])
-    previousPoly <- polynomial[[1]]
+    previousPoly <- solver(data[1:3])
+    result <- as.piecewisePolynomial(previousPoly, x[1], x[2])
+
     for (i in 2:(n-2)) {
         thisPoly <- solver(data=data[i:(i+2)])
-        polynomial[[i]] <- patch(previousPoly, thisPoly, percentagePolynomial(point.x(data)[i],point.x(data)[i+1]))
+        poly <- patch(previousPoly, thisPoly, percentagePolynomial(x[i],x[i+1]))
         previousPoly <- thisPoly
-    }
 
-    return(piecewisePolynomial(leftBound, rightBound, polynomial))
+        result <- result %+% as.piecewisePolynomial(poly, x[i], x[i+1])
+    }
+    result <- result %+% as.piecewisePolynomial(thisPoly, x[n-1], x[n])
+
+    return(result)
 }
 
 #' Interpolation by Patching Functions Generated at Each Point
@@ -134,18 +135,19 @@ interpolate.patch.threePoint <- function(data, solver, patch = defaultPatchPolyn
 #' @return A piecewise polynomial.
 interpolate.patch.onePointSlope <- function(data, slopes, solver, patch = defaultPatchPolynomial) {
     n <- length(data)
-    leftBound <- point.x(data)[1:(n-1)]
-    rightBound <- point.x(data)[2:n]
-    polynomial <- vector(mode = "list", length = n-1)
+    x <- point.x(data)
+    result <- piecewisePolynomial()
 
     previousPoly <- solver(data = data[1], slope = slopes[1])
     for (i in 1:(n-1)) {
         thisPoly <- solver(data = data[i+1], slope = slopes[i+1])
-        polynomial[[i]] <- patch(previousPoly, thisPoly, percentagePolynomial(leftBound[i], rightBound[i]))
+        poly <- patch(previousPoly, thisPoly, percentagePolynomial(x[i], x[i+1]))
         previousPoly <- thisPoly
+
+        result <- result %+% as.piecewisePolynomial(poly, x[i], x[i+1])
     }
 
-    return(piecewisePolynomial(leftBound, rightBound, polynomial))
+    return(result)
 }
 
 #' Interpolation by Joining Functions of Each segments
@@ -157,28 +159,13 @@ interpolate.patch.onePointSlope <- function(data, slopes, solver, patch = defaul
 #' @return A piecewise polynomial.
 interpolate.twoPointSlope <- function(data, slopes, solver, ...) {
     n <- length(data)
-    leftBound <- c()
-    rightBound <- c()
-    polynomial <- list()
+    x <- point.x(data)
+    result <- piecewisePolynomial()
 
     for (i in 1:(n-1)) {
-        result <- solver(data = data[i:(i+1)], slopes = slopes[i:(i+1)], ...)
-        if (class(result) == "piecewisePolynomial") {
-            leftBound <- c(leftBound, result@leftBound)
-            rightBound <- c(rightBound, result@rightBound)
-            polynomial <- append(polynomial, result@polynomial)
-        } else if (class(result) == "polynomial") {
-            leftBound <- c(leftBound, point.x(data)[i])
-            rightBound <- c(rightBound, point.x(data)[i+1])
-            polynomial <- append(polynomial, result)
-        } else if (class(result) == "numeric") {
-            leftBound <- c(leftBound, point.x(data)[i])
-            rightBound <- c(rightBound, point.x(data)[i+1])
-            polynomial <- append(polynomial, polynomial(result))
-        } else {
-            stop(paste("Unrecognized return class of solver", class(result)))
-        }
+        poly <- solver(data = data[i:(i+1)], slopes = slopes[i:(i+1)], ...)
+        result <- result %+% as.piecewisePolynomial(poly, x[i], x[i+1])
     }
 
-    return(piecewisePolynomial(leftBound, rightBound, polynomial))
+    return(result)
 }

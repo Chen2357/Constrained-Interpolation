@@ -66,18 +66,12 @@ combinePiecewisePolynomial <- function(FUN, e1, e2, tol = sqrt(.Machine$double.e
             rightBound2 <- e2@rightBound[i2]
             poly1 <- e1@polynomial[[i1]]
             poly2 <- e2@polynomial[[i2]]
-
-            increment1 <- function() j1 <- j1 + 1
-            increment2 <- function() j2 <- j2 + 1
         } else {
             leftBound2 <- e1@leftBound[i1]
             rightBound1 <- e2@rightBound[i2]
             rightBound2 <- e1@rightBound[i1]
             poly1 <- e2@polynomial[[i2]]
             poly2 <- e1@polynomial[[i1]]
-
-            increment1 <- function() j2 <- j2 + 1
-            increment2 <- function() j1 <- j1 + 1
         }
         
         if (rightBound1 < leftBound2 + tol) {
@@ -244,7 +238,7 @@ setMethod("lines", "piecewisePolynomial",
 )
 
 setMethod("initialize", "piecewisePolynomial",
-    function(.Object, leftBound, rightBound, polynomial) {
+    function(.Object, leftBound = numeric(0), rightBound = numeric(0), polynomial = list()) {
         .Object@leftBound <- leftBound
         .Object@rightBound <- rightBound
         .Object@polynomial <- polynomial
@@ -286,6 +280,8 @@ setMethod("show", "piecewisePolynomial",
 
 setGeneric("as.piecewisePolynomial", function(object, leftBound, rightBound) standardGeneric("as.piecewisePolynomial"))
 setMethod("as.piecewisePolynomial", signature(object = "polynomial", leftBound = "numeric", rightBound = "numeric"), function(object, leftBound, rightBound) piecewisePolynomial(leftBound, rightBound, list(object)))
+
+setMethod("as.piecewisePolynomial", signature(object = "numeric", leftBound = "numeric", rightBound = "numeric"), function(object, leftBound, rightBound) piecewisePolynomial(leftBound, rightBound, list(polynomial(c(object)))))
 
 setMethod("as.piecewisePolynomial", signature(object = "piecewisePolynomial", leftBound = "numeric", rightBound = "numeric"), function(object, leftBound, rightBound) {
     leftBounds <- c()
