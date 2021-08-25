@@ -189,6 +189,28 @@ setMethod("*", signature(e1 = "numeric", e2 = "piecewisePolynomial"), function(e
     return(e2)
 })
 
+### ANCHOR Subtraction
+setMethod("-", signature(e1 = "piecewisePolynomial", e2 = "piecewisePolynomial"), function(e1, e2) {
+    combinePiecewisePolynomial(`-`, e1, e2)
+})
+setMethod("-", signature(e1 = "piecewisePolynomial", e2 = "polynomial"), function(e1, e2) {
+    e1@polynomial <- Map(`-`, e1@polynomial, e2)
+    return(e1)
+})
+setMethod("-", signature(e1 = "piecewisePolynomial", e2 = "numeric"), function(e1, e2) {
+    e1@polynomial <- Map(`-`, e1@polynomial, e2)
+    return(e1)
+})
+setMethod("-", signature(e1 = "polynomial", e2 = "piecewisePolynomial"), function(e1, e2) {
+    e2@polynomial <- Map(`-`, e1, e2@polynomial)
+    return(e2)
+})
+setMethod("-", signature(e1 = "numeric", e2 = "piecewisePolynomial"), function(e1, e2) {
+    e2@polynomial <- Map(`*`, e1, e2@polynomial)
+    return(e2)
+})
+
+### ANCHOR Append
 setGeneric("%+%", function(e1, e2) standardGeneric("%+%"))
 setMethod("%+%", signature(e1 = "piecewisePolynomial", e2 = "piecewisePolynomial"), function(e1, e2) {
     result <- piecewisePolynomial(c(e1@leftBound, e2@leftBound), c(e1@rightBound, e2@rightBound), c(e1@polynomial, e2@polynomial))
