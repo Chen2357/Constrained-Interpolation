@@ -13,8 +13,12 @@ y <- c(1,0,2,1,3)
 data <- pointData(x,y)
 
 threePointSolver <- function(data) {
-    slopes <- findSlope.beta.threePoints(data)
-    result <- interpolate.patch.onePointSlope(data, slopes, quadratic.point.slope.extrema)
+    result <- quadraticPolynomial(data)
+    ce <- coef(result)
+    if (ce[2] * ce[2] - 4 * ce[1] * ce[3] > 0) {
+        slopes <- findSlope.beta.threePoints(data)
+        result <- interpolate.patch.onePointSlope(data, slopes, quadratic.point.slope.extrema)
+    }
     return(result)
 }
 
@@ -23,7 +27,6 @@ plot(interpolation, xlab="x", ylab="y")
 # plot(interpolation, interval=seq(0,10,0.001), xlab="x", ylab="y", ylim=range(-2,3.5))
 
 options(digits = 4)
-print(as.character(interpolation))
 print(as.data.frame(interpolation))
 
 lines(differentiate(interpolation), col="blue")
