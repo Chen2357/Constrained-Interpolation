@@ -211,7 +211,7 @@ setMethod("-", signature(e1 = "numeric", e2 = "piecewisePolynomial"), function(e
 })
 
 ### ANCHOR Append
-setGeneric("%+%", function(e1, e2) standardGeneric("%+%"))
+# setGeneric("%+%", function(e1, e2) standardGeneric("%+%"))
 setMethod("%+%", signature(e1 = "piecewisePolynomial", e2 = "piecewisePolynomial"), function(e1, e2) {
     result <- piecewisePolynomial(c(e1@leftBound, e2@leftBound), c(e1@rightBound, e2@rightBound), c(e1@polynomial, e2@polynomial))
     validObject(result)
