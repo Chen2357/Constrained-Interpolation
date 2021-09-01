@@ -115,12 +115,16 @@ interpolate.patch.threePoint <- function(data, solver, patch = defaultPatchPolyn
     previousPoly <- solver(data[1:3])
     result <- as.piecewisePolynomial(previousPoly, x[1], x[2])
 
-    for (i in 2:(n-2)) {
-        thisPoly <- solver(data=data[i:(i+2)])
-        poly <- patch(previousPoly, thisPoly, percentagePolynomial(x[i],x[i+1]))
-        previousPoly <- thisPoly
+    if (n >= 4) {
+        for (i in 2:(n-2)) {
+            thisPoly <- solver(data=data[i:(i+2)])
+            poly <- patch(previousPoly, thisPoly, percentagePolynomial(x[i],x[i+1]))
+            previousPoly <- thisPoly
 
-        result <- result %+% as.piecewisePolynomial(poly, x[i], x[i+1])
+            result <- result %+% as.piecewisePolynomial(poly, x[i], x[i+1])
+        }
+    } else {
+        thisPoly <- solver(data=data[1:3])
     }
     result <- result %+% as.piecewisePolynomial(thisPoly, x[n-1], x[n])
 
