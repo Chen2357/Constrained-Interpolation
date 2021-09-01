@@ -9,7 +9,8 @@
 #' @param p A polynomial that describes the phase between \code{a} and \code{b}, with value between 0 and 1.
 #' @return \code{(1-3*p^2+2*p^3)*(a-b)+b}
 defaultPatchPolynomial <- function(a,b,p) {
-    (((1 - (3 * (p ^ 2))) + (2 * (p ^ 3))) * (a - b)) + b
+    # (((1 - (3 * (p ^ 2))) + (2 * (p ^ 3))) * (a - b)) + b
+    (6 * p ^ 5 - 15 * p ^ 4 + 10 * p ^ 3) * (b - a) + a
 }
 
 #' Percentage Polynomial
