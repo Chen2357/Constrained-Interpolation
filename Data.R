@@ -25,19 +25,14 @@ setValidity("pointData", function(object) {
 })
 
 setMethod("length", "pointData", function(x) length(x@x))
-
-setGeneric("point.x", function(object) standardGeneric("point.x"))
 setMethod("point.x", "pointData", function(object) object@x)
-setGeneric("point.x<-", function(object,value) standardGeneric("point.x<-"))
 setMethod("point.x<-", "pointData", function(object,value) {
     object@x <- value
     validObject(object)
     object
 })
 
-setGeneric("point.y", function(object) standardGeneric("point.y"))
 setMethod("point.y", "pointData", function(object) object@y)
-setGeneric("point.y<-", function(object,value) standardGeneric("point.y<-"))
 setMethod("point.y<-", "pointData", function(object,value) {
     object@y <- value
     validObject(object)

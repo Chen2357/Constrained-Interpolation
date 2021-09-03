@@ -24,9 +24,7 @@ setValidity("polynomial", function(object) {
 })
 
 # ANCHOR Accessor
-setGeneric("coef", function(object) standardGeneric("coef"))
 setMethod("coef", "polynomial", function(object) object@coef)
-setGeneric("coef<-", function(object,value) standardGeneric("coef<-"))
 setMethod("coef<-", "polynomial", function(object,value) {
     object@coef <- value
     validObject(object)
@@ -85,8 +83,6 @@ setMethod("*", signature(e1 = "polynomial", e2 = "numeric"), function(e1, e2) re
 
 setMethod("*", signature(e1 = "numeric", e2 = "polynomial"), function(e1, e2) return(polynomial(e1 * coef(e2))))
 
-is.wholenumber <- function(x, tol = sqrt(.Machine$double.eps))  abs(x - round(x)) < tol
-
 setMethod("^", signature(e1 = "polynomial", e2 = "numeric"), function(e1, e2) {
     if (e2%%1 != 0) {
         warning("exponent must be an integer, caught ", e2)
@@ -108,13 +104,11 @@ setMethod("^", signature(e1 = "polynomial", e2 = "numeric"), function(e1, e2) {
 })
 
 # ANCHOR Methods
-setGeneric("degree", function(object) standardGeneric("degree"))
-setMethod("degree", "polynomial", function(object) length(object@coef)-1)
-setGeneric("degree<-", function(object,value) standardGeneric("degree<-"))
-setMethod("degree<-", "polynomial", function(object,value) {
-    length(object@coef) <- value + 1
-    validObject(object)
-    object
+setMethod("degree", "polynomial", function(x) length(object@coef)-1)
+setMethod("degree<-", "polynomial", function(x,value) {
+    length(x@coef) <- value + 1
+    validObject(x)
+    x
 })
 
 setMethod("length", "polynomial", function(x) length(x@coef))
@@ -139,7 +133,6 @@ setMethod("initialize", "polynomial",
     }
 )
 
-setGeneric("differentiate", function(x) standardGeneric("differentiate"))
 setMethod("differentiate", "polynomial", function(x) polynomial(coef(x)[-1] * 1:degree(x)))
 
 setMethod("predict", signature(object="polynomial"),
@@ -154,6 +147,14 @@ setMethod("predict", signature(object="polynomial"),
             result <- polynomial(c(0))
             for (i in seq_len(length(object))) {
                 result <- result + object@coef[i] * (newdata ^ (i-1))
+            }
+            return(result)
+        } else if (class(newdata) == "dual") {
+            result <- dual(rep(0,length(newdata)*(degree(newdata)+1)), degree = degree(newdata))
+            p <- 1
+            for (i in seq_len(length(object))) {
+                result <- result + object@coef[i] * p
+                p <- p * newdata
             }
             return(result)
         } else {
@@ -183,7 +184,7 @@ setMethod("as.character", "polynomial",
 
 setMethod("show", "polynomial",
     function(object) {
-        print(as.character(object))
+        print(noquote(as.character(object)))
     }
 )
 

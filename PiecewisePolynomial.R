@@ -211,7 +211,6 @@ setMethod("-", signature(e1 = "numeric", e2 = "piecewisePolynomial"), function(e
 })
 
 ### ANCHOR Append
-# setGeneric("%+%", function(e1, e2) standardGeneric("%+%"))
 setMethod("%+%", signature(e1 = "piecewisePolynomial", e2 = "piecewisePolynomial"), function(e1, e2) {
     result <- piecewisePolynomial(c(e1@leftBound, e2@leftBound), c(e1@rightBound, e2@rightBound), c(e1@polynomial, e2@polynomial))
     validObject(result)
@@ -239,10 +238,8 @@ setMethod("predict", signature(object="piecewisePolynomial"),
 
 setMethod("as.function", "piecewisePolynomial", function(x) function(xx) predict(x,xx))
 
-setGeneric("leftMostBound", function(object) standardGeneric("leftMostBound"))
 setMethod("leftMostBound", "piecewisePolynomial", function(object) min(object@leftBound))
 
-setGeneric("rightMostBound", function(object) standardGeneric("rightMostBound"))
 setMethod("rightMostBound", "piecewisePolynomial", function(object) max(object@rightBound))
 
 setMethod("differentiate", "piecewisePolynomial", function(x) piecewisePolynomial(x@leftBound, x@rightBound, lapply(x@polynomial, differentiate)))
@@ -300,7 +297,6 @@ setMethod("show", "piecewisePolynomial",
     }
 )
 
-setGeneric("as.piecewisePolynomial", function(object, leftBound, rightBound) standardGeneric("as.piecewisePolynomial"))
 setMethod("as.piecewisePolynomial", signature(object = "polynomial", leftBound = "numeric", rightBound = "numeric"), function(object, leftBound, rightBound) piecewisePolynomial(leftBound, rightBound, list(object)))
 
 setMethod("as.piecewisePolynomial", signature(object = "numeric", leftBound = "numeric", rightBound = "numeric"), function(object, leftBound, rightBound) piecewisePolynomial(leftBound, rightBound, list(polynomial(c(object)))))

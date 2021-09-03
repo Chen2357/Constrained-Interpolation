@@ -1,4 +1,3 @@
-setGeneric("symmetrize", function(x) standardGeneric("symmetrize"))
 setMethod("symmetrize", "matrix", function(x) {
     x[lower.tri(x)] <- x[upper.tri(x)] <- (x[lower.tri(x)] + x[upper.tri(x)])/2
     return(x)
