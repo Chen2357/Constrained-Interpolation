@@ -10,6 +10,9 @@ setValidity("dual", function(object) {
     if (length(object@degree) != 1) {
         return("Dual degree must be a single number")
     }
+    if (object@degree < 0 || !is.wholenumber(object@degree)) {
+        return("Dual degree must be a nonnegative integer")
+    }
     if (length(object@values) %% (object@degree+1) != 0) {
         return("Dual values count must be a multiple of (degree+1)")
     }
@@ -17,7 +20,7 @@ setValidity("dual", function(object) {
 })
 
 setMethod("initialize", "dual",
-    function(.Object, values = numeric(), degree = length(values), bydegree = FALSE) {
+    function(.Object, values = numeric(), degree = length(values)-1, bydegree = FALSE) {
         remain <- -length(values) %% (degree+1)
         values <- c(values, rep(0, remain))
         if (bydegree) {
@@ -92,7 +95,6 @@ setMethod("*", signature(e1 = "dual", e2 = "numeric"), function(e1, e2) {
 })
 setMethod("*", signature(e1 = "numeric", e2 = "dual"), function(e1, e2) {
     if (length(e1) > length(e2)) stop("Length of the dual must be longer than length of vector")
-    e2@values <- c(e1 %x% rep(1,degree(e1)+1)) + e2@values
     return(e2)
 })
 
