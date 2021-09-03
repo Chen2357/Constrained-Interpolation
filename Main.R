@@ -9,6 +9,7 @@ source("SlopeFinder.R")
 source("PiecewisePolynomial.R")
 source("Interpolater.R")
 source("QuadraticProgramming.R")
+source("DualNumber.R")
 
 x <- c(1,2,3,4,5)
 y <- c(1,0,2,1,3)
@@ -42,10 +43,47 @@ my_plot <- function(interpolation, interval = seq(leftMostBound(interpolation),r
 }
 
 # interpolation <- interpolate.patch.onePointSlope(data, slopes, quadratic.point.slope.extrema)
-interpolation <- interpolate.patch.threePoint(data, threePointSolver)
+# interpolation <- interpolate.patch.threePoint(data, threePointSolver)
 
-int <- seq(leftMostBound(interpolation),rightMostBound(interpolation),0.005)
-my_plot(interpolation, interval=int)
+int <- seq(leftMostBound(interpolation),rightMostBound(interpolation),0.05)
+# my_plot(interpolation, interval=int)
+
+interpolate.bump <- function(data, int) {
+    n <- length(data)
+    x <- point.x(data)
+    bump <- function(x) exp(1-1/(1-x^2))
+
+    if (class(int) == "numeric") {
+        y <- rep(NA, length(int))
+    } else if (class(int) == "dual") {
+        y <- rep(dual(0, degree = degree(int)), length(int))
+    } else {
+        stop("Unsupported")
+    }
+    previousPoly <- threePointSolver(data[1:3])
+
+    I <- which(x[1] <= int & int < x[2])
+    y[I] <- predict(previousPoly, int[I])
+
+    for (i in 2:(n-2)) {
+        I <- which(x[i] <= int & int < x[i+1])
+        thisPoly <- threePointSolver(data=data[i:(i+2)])
+
+        a <- predict(previousPoly, int[I])
+        b <- predict(thisPoly, int[I])
+        p <- (int[I] - x[i]) / (x[i+1] - x[i])
+
+        y[I] <- bump(p) * (a - b) + b
+        previousPoly <- thisPoly
+    }
+
+    I <- which(x[n-1] <= int & int <= x[n])
+    y[I] <- predict(thisPoly, int[I])
+    return(y)
+}
+
+r <- interpolate.bump(data, dual(c(int,rep(1,length(int))),degree=1, bydegree=TRUE))
+plot(int, r[[,0]], type = "l")
 
 # plot(interpolation, interval=int, xlab="x", ylab="y")
 # # plot(interpolation, interval=seq(0,10,0.001), xlab="x", ylab="y", ylim=range(-2,3.5))

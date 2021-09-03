@@ -20,7 +20,7 @@ setValidity("dual", function(object) {
 })
 
 setMethod("initialize", "dual",
-    function(.Object, values = numeric(), degree = length(values)-1, bydegree = FALSE) {
+    function(.Object, values = numeric(), degree = max(length(values)-1,0), bydegree = FALSE) {
         remain <- -length(values) %% (degree+1)
         values <- c(values, rep(0, remain))
         if (bydegree) {
@@ -34,12 +34,22 @@ setMethod("initialize", "dual",
     }
 )
 
+setMethod("rep", "dual",
+    function(x, times) {
+        x@values <- rep(x@values, times)
+        validObject(x)
+        return(x)
+    }
+)
+
 setMethod("length", "dual", function(x) length(x@values) / (x@degree+1))
 setMethod("degree", "dual", function(x) x@degree)
 
 setMethod("[", "dual", function(x,i,...) dual(x@values[i %x% rep(x@degree+1,x@degree+1) - x@degree:0], x@degree))
 setMethod("[<-", "dual", function(x,i,...,value) {
     if (degree(value) != degree(x)) stop("Dual degrees do not match")
+    if (length(i) == 0) return(x)
+    if (length(x) == 0) return(x)
     x@values[i %x% rep(x@degree+1,x@degree+1) - x@degree:0] <- value@values
     validObject(x)
     x
@@ -63,18 +73,46 @@ setMethod("+", signature(e1 = "dual", e2 = "dual"), function(e1, e2) {
     return(e1)
 })
 setMethod("+", signature(e1 = "dual", e2 = "numeric"), function(e1, e2) {
-    if (length(e1) < length(e2)) stop("Length of the dual must be longer than length of vector")
+    if (length(e1) == 0) return(e1)
+    if (length(e1) < length(e2)) stop("Length of the dual must be no shorter than length of vector")
     e1[[,0]] <- e1[[,0]] + e2
     return(e1)
 })
 setMethod("+", signature(e1 = "numeric", e2 = "dual"), function(e1, e2) {
-    if (length(e1) > length(e2)) stop("Length of the dual must be longer than length of vector")
+    if (length(e2) == 0) return(e2)
+    if (length(e1) > length(e2)) stop("Length of the dual must be no shorter than length of vector")
+    e2[[,0]] <- e1 + e2[[,0]]
+    return(e2)
+})
+
+# ANCHOR Subtraction
+setMethod("-", signature(e1 = "dual"), function(e1, e2) {
+    e1@values <- -e1@values
+    return(e1)
+})
+setMethod("-", signature(e1 = "dual", e2 = "dual"), function(e1, e2) {
+    if (degree(e1) != degree(e2)) stop("Dual degrees do not match")
+    e1@values <- e1@values - e2@values
+    return(e1)
+})
+setMethod("-", signature(e1 = "dual", e2 = "numeric"), function(e1, e2) {
+    if (length(e1) == 0) return(e1)
+    if (length(e1) < length(e2)) stop("Length of the dual must be no shorter than length of vector")
+    e1[[,0]] <- e1[[,0]] - e2
+    return(e1)
+})
+setMethod("-", signature(e1 = "numeric", e2 = "dual"), function(e1, e2) {
+    if (length(e2) == 0) return(e2)
+    if (length(e1) > length(e2)) stop("Length of the dual must be no shorter than length of vector")
+    e2@values <- -e2@values
     e2[[,0]] <- e1 + e2[[,0]]
     return(e2)
 })
 
 ## ANCHOR Multiplication
 setMethod("*", signature(e1 = "dual", e2 = "dual"), function(e1, e2) {
+    if (length(e1) == 0) return(e1)
+    if (length(e2) == 0) return(e2)
     if (degree(e1) != degree(e2)) stop("Dual degrees do not match")
     n <- max(length(e1), length(e2))
     if (n %% length(e1) != n %% length(e2)) warning("longer object length is not a multiple of shorter object length")
@@ -89,25 +127,29 @@ setMethod("*", signature(e1 = "dual", e2 = "dual"), function(e1, e2) {
     return(dual(values, degree(e1)))
 })
 setMethod("*", signature(e1 = "dual", e2 = "numeric"), function(e1, e2) {
-    if (length(e1) < length(e2)) stop("Length of the dual must be longer than length of vector")
+    if (length(e1) == 0) return(e1)
+    if (length(e1) < length(e2)) stop("Length of the dual must be no shorter than length of vector")
     e1@values <- e1@values * c(e2 %x% rep(1,degree(e1)+1))
     return(e1)
 })
 setMethod("*", signature(e1 = "numeric", e2 = "dual"), function(e1, e2) {
-    if (length(e1) > length(e2)) stop("Length of the dual must be longer than length of vector")
+    if (length(e2) == 0) return(e2)
+    if (length(e1) > length(e2)) stop("Length of the dual must be no shorter than length of vector")
     e2@values <- c(e1 %x% rep(1,degree(e2)+1)) * e2@values
     return(e2)
 })
 
 ## ANCHOR Division
 setMethod("/", signature(e1 = "dual", e2 = "numeric"), function(e1, e2) {
-    if (length(e1) < length(e2)) stop("Length of the dual must be longer than length of vector")
+    if (length(e1) == 0) return(e1)
+    if (length(e1) < length(e2)) stop("Length of the dual must be no shorter than length of vector")
     e1@values <- e1@values / c(e2 %x% rep(1,degree(e1)+1))
     return(e1)
 })
 
 setMethod("/", signature(e1 = "numeric", e2 = "dual"), function(e1, e2) {
-    if (length(e1) > length(e2)) stop("Length of the dual must be longer than length of vector")
+    if (length(e2) == 0) return(e2)
+    if (length(e1) > length(e2)) stop("Length of the dual must be no shorter than length of vector")
     n <- length(e2)
     if (n %% length(e1) != 0) warning("longer object length is not a multiple of shorter object length")
     stride <- degree(e2) + 1
@@ -127,8 +169,10 @@ setMethod("/", signature(e1 = "numeric", e2 = "dual"), function(e1, e2) {
     return(dual(values, degree(e2)))
 })
 
+## ANCHOR Exponentiation
 setMethod("exp", signature(x = "dual"), function(x) {
     n <- length(x)
+    if (n==0) return(x)
     stride <- degree(x) + 1
     values <- rep(0, n * stride)
     I <- seq(1, (n-1) * stride + 1, stride)
@@ -154,6 +198,53 @@ setMethod("exp", signature(x = "dual"), function(x) {
     return(dual(values, degree(x)))
 })
 
+setMethod("^", signature(e1 = "dual", e2 = "numeric"), function(e1, e2) {
+    if (e2%%1 != 0) {
+        warning("exponent must be an integer, caught ", e2)
+        return(NULL)
+    }
+    if (length(e1)==0) return(x)
+    result <- 1
+
+    while (e2 > 0) {
+        if (e2 %% 2 == 1) {
+            result <- result * e1
+            e2 <- (e2-1)/2
+        } else {
+            e2 <- e2/2
+        }
+        e1 <- e1 * e1
+    }
+
+    return(result)
+})
+
+## ANCHOR Comparison
+setMethod("<=", signature(e1 = "dual", e2 = "dual"), function(e1, e2) e1[[,0]] <= e2[[,0]])
+setMethod("<=", signature(e1 = "numeric", e2 = "dual"), function(e1, e2) e1 <= e2[[,0]])
+setMethod("<=", signature(e1 = "dual", e2 = "numeric"), function(e1, e2) e1[[,0]] <= e2)
+
+setMethod("<", signature(e1 = "dual", e2 = "dual"), function(e1, e2) e1[[,0]] < e2[[,0]])
+setMethod("<", signature(e1 = "numeric", e2 = "dual"), function(e1, e2) e1 < e2[[,0]])
+setMethod("<", signature(e1 = "dual", e2 = "numeric"), function(e1, e2) e1[[,0]] < e2)
+
+setMethod("==", signature(e1 = "dual", e2 = "dual"), function(e1, e2) e1[[,0]] == e2[[,0]])
+setMethod("==", signature(e1 = "numeric", e2 = "dual"), function(e1, e2) e1 == e2[[,0]])
+setMethod("==", signature(e1 = "dual", e2 = "numeric"), function(e1, e2) e1[[,0]] == e2)
+
+setMethod("!=", signature(e1 = "dual", e2 = "dual"), function(e1, e2) e1[[,0]] != e2[[,0]])
+setMethod("!=", signature(e1 = "numeric", e2 = "dual"), function(e1, e2) e1 != e2[[,0]])
+setMethod("!=", signature(e1 = "dual", e2 = "numeric"), function(e1, e2) e1[[,0]] != e2)
+
+setMethod(">", signature(e1 = "dual", e2 = "dual"), function(e1, e2) e1[[,0]] > e2[[,0]])
+setMethod(">", signature(e1 = "numeric", e2 = "dual"), function(e1, e2) e1 > e2[[,0]])
+setMethod(">", signature(e1 = "dual", e2 = "numeric"), function(e1, e2) e1[[,0]] > e2)
+
+setMethod(">=", signature(e1 = "dual", e2 = "dual"), function(e1, e2) e1[[,0]] >= e2[[,0]])
+setMethod(">=", signature(e1 = "numeric", e2 = "dual"), function(e1, e2) e1 >= e2[[,0]])
+setMethod(">=", signature(e1 = "dual", e2 = "numeric"), function(e1, e2) e1[[,0]] >= e2)
+
+## ANCHOR Output
 setMethod("as.character", "dual",
     function(x, lab = "e", digits = getOption("digits")) {
         result <- rep("", length(x))
@@ -167,12 +258,14 @@ setMethod("as.character", "dual",
                 result[I] <- paste(result[I], signif(x[[I,i]], digits),"*",lab,ifelse(i==1,"",paste("^",i,sep="")), sep = "")
             }
         }
+        zero <- which(result == 0)
+        result[zero] <- "0"
         return(result)
     }
 )
 
 setMethod("show", "dual",
     function(object) {
-        print(noquote(paste(as.character(object), collapse = ",  ")))
+        print(as.character(object))
     }
 )

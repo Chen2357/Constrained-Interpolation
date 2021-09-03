@@ -104,7 +104,7 @@ setMethod("^", signature(e1 = "polynomial", e2 = "numeric"), function(e1, e2) {
 })
 
 # ANCHOR Methods
-setMethod("degree", "polynomial", function(x) length(object@coef)-1)
+setMethod("degree", "polynomial", function(x) length(x@coef)-1)
 setMethod("degree<-", "polynomial", function(x,value) {
     length(x@coef) <- value + 1
     validObject(x)

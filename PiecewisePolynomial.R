@@ -230,6 +230,13 @@ setMethod("predict", signature(object="piecewisePolynomial"),
                 y[indices] <- predict(object@polynomial[[i]],newdata[indices])
             }
             return(y)
+        } else if (class(newdata) == "dual") {
+            y <- dual(rep(0,length(newdata)*(degree(newdata)+1)), degree = degree(newdata))
+            for(i in seq_len(length(object))) {
+                I <- which(object@leftBound[i] <= newdata & newdata <= object@rightBound[i])
+                y[I] <- predict(object@polynomial[[i]],newdata[I])
+            }
+            return(y)
         } else {
             stop("Unsupprted newdata class in predict where object is piecewisePolynomial")
         }
@@ -279,7 +286,7 @@ setMethod("as.character", "piecewisePolynomial",
     }
 )
 
-setMethod("degree", "piecewisePolynomial", function(object) max(unlist(lapply(object@polynomial, degree), use.names=FALSE)))
+setMethod("degree", "piecewisePolynomial", function(x) max(unlist(lapply(x@polynomial, degree), use.names=FALSE)))
 
 setMethod("as.data.frame", "piecewisePolynomial", function(x, xlab="x", rangeFormatter = defaultRangeFormatter, digits = getOption("digits"), ...) {
     interval <- NULL
