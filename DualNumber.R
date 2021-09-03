@@ -95,6 +95,7 @@ setMethod("*", signature(e1 = "dual", e2 = "numeric"), function(e1, e2) {
 })
 setMethod("*", signature(e1 = "numeric", e2 = "dual"), function(e1, e2) {
     if (length(e1) > length(e2)) stop("Length of the dual must be longer than length of vector")
+    e2@values <- c(e1 %x% rep(1,degree(e2)+1)) * e2@values
     return(e2)
 })
 
