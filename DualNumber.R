@@ -152,3 +152,26 @@ setMethod("exp", signature(x = "dual"), function(x) {
 
     return(dual(values, degree(x)))
 })
+
+setMethod("as.character", "dual",
+    function(x, lab = "e", digits = getOption("digits")) {
+        result <- rep("", length(x))
+        for (i in 0:degree(x)) {
+            I <- which(x[[,i]] != 0)
+            nonempty <- I & which(result != "")
+            if (i==0) {
+                result[I] <- paste(result[I], signif(x[[I,i]], digits), sep = "")
+            } else {
+                result[nonempty] <- paste(result[nonempty], " + ", sep = "")
+                result[I] <- paste(result[I], signif(x[[I,i]], digits),"*",lab,ifelse(i==1,"",paste("^",i,sep="")), sep = "")
+            }
+        }
+        return(result)
+    }
+)
+
+setMethod("show", "dual",
+    function(object) {
+        print(noquote(paste(as.character(object), collapse = ",  ")))
+    }
+)
