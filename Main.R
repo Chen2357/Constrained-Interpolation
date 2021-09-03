@@ -56,7 +56,7 @@ interpolate.bump <- function(data, int) {
     if (class(int) == "numeric") {
         y <- rep(NA, length(int))
     } else if (class(int) == "dual") {
-        y <- rep(dual(0, degree = degree(int)), length(int))
+        y <- dual(0, degree = degree(int), length=length(int))
     } else {
         stop("Unsupported")
     }

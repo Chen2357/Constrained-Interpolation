@@ -20,8 +20,23 @@ setValidity("dual", function(object) {
 })
 
 setMethod("initialize", "dual",
-    function(.Object, values = numeric(), degree = max(length(values)-1,0), bydegree = FALSE) {
-        remain <- -length(values) %% (degree+1)
+    function(.Object, values = numeric(), degree = max(length(values)-1,0), length.out, bydegree = FALSE) {
+        if (missing(length.out)) {
+            if (missing(degree)) {
+                degree <- max(length(values)-1,0)
+                remain <- 0
+            } else {
+                remain <- -length(values) %% (degree+1)
+            }
+        } else {
+            if (missing(degree)) {
+                degree <- ceiling(length(values) / length.out) - 1
+                remain <- -length(values) %% length.out
+            } else {
+                remain <- length.out * (degree+1) - length(values)
+                if (remain < 0) stop("Length of values greater than the length implied")
+            }
+        }
         values <- c(values, rep(0, remain))
         if (bydegree) {
             values <- as.vector(t(matrix(values, ncol=degree+1)))
@@ -43,10 +58,24 @@ setMethod("rep", "dual",
 )
 
 setMethod("length", "dual", function(x) length(x@values) / (x@degree+1))
+setMethod("length<-", signature(x = "dual", value="numeric"), function(x,value) {
+    length(x@values) <- value * (degree(x) + 1)
+    validObject(x)
+    x
+})
 setMethod("degree", "dual", function(x) x@degree)
+setMethod("degree<-", signature(x = "dual", value="numeric"), function(x,value) {
+    if (value <= degree(x)) {
+        x@values <- as.vector(matrix(x@values, nrow=degree+1)[1:(value+1),])
+    } else {
+        x@values <- as.vector(rbind(matrix(x@values, nrow=degree+1),matrix(0, nrow=value-degree(x), ncol=length(x))))
+    }
+    validObject(x)
+    x
+})
 
-setMethod("[", "dual", function(x,i,...) dual(x@values[i %x% rep(x@degree+1,x@degree+1) - x@degree:0], x@degree))
-setMethod("[<-", "dual", function(x,i,...,value) {
+setMethod("[", signature(x = "dual", i="numeric", j="missing"), function(x,i,...) dual(x@values[i %x% rep(x@degree+1,x@degree+1) - x@degree:0], x@degree))
+setMethod("[<-", signature(x = "dual", i="numeric", j="missing", value = "dual"), function(x,i,...,value) {
     if (degree(value) != degree(x)) stop("Dual degrees do not match")
     if (length(i) == 0) return(x)
     if (length(x) == 0) return(x)
@@ -55,11 +84,11 @@ setMethod("[<-", "dual", function(x,i,...,value) {
     x
 })
 
-setMethod("[[", "dual", function(x,i=seq_len(length(x)),j=0,...) {
+setMethod("[[", signature(x = "dual", i="numeric", j="numeric"), function(x,i=seq_len(length(x)), j=0,...) {
     if (length(j) != 1) stop("Degree must be a single number")
     x@values[(i-1) * (x@degree+1) + j + 1]
 })
-setMethod("[[<-", "dual", function(x,i=seq_len(length(x)),j=0,...,value) {
+setMethod("[[<-", signature(x = "dual", i="numeric", j="numeric", value = "dual"), function(x,i=seq_len(length(x)),j=0,...,value) {
     if (length(j) != 1) stop("Degree must be a single number")
     x@values[(i-1) * (x@degree+1) + j + 1] <- value
     validObject(x)

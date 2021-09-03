@@ -231,7 +231,7 @@ setMethod("predict", signature(object="piecewisePolynomial"),
             }
             return(y)
         } else if (class(newdata) == "dual") {
-            y <- dual(rep(0,length(newdata)*(degree(newdata)+1)), degree = degree(newdata))
+            y <- dual(0, degree = degree(newdata), length=length(newdata))
             for(i in seq_len(length(object))) {
                 I <- which(object@leftBound[i] <= newdata & newdata <= object@rightBound[i])
                 y[I] <- predict(object@polynomial[[i]],newdata[I])

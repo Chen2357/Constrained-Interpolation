@@ -145,12 +145,14 @@ setMethod("predict", signature(object="polynomial"),
             return(result)
         } else if (class(newdata) == "polynomial") {
             result <- polynomial(c(0))
+            p <- 1
             for (i in seq_len(length(object))) {
-                result <- result + object@coef[i] * (newdata ^ (i-1))
+                result <- result + object@coef[i] * p
+                p <- p * newdata
             }
             return(result)
         } else if (class(newdata) == "dual") {
-            result <- dual(rep(0,length(newdata)*(degree(newdata)+1)), degree = degree(newdata))
+            result <- dual(0, degree = degree(newdata), length=length(newdata))
             p <- 1
             for (i in seq_len(length(object))) {
                 result <- result + object@coef[i] * p
