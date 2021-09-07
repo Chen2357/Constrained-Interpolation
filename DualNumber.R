@@ -84,11 +84,15 @@ setMethod("[<-", signature(x = "dual", i="numeric", j="missing", value = "dual")
     x
 })
 
-setMethod("[[", signature(x = "dual", i="numeric", j="numeric"), function(x,i=seq_len(length(x)), j=0,...) {
+setMethod("[[", signature(x = "dual", i="numeric", j="numeric"), function(x,i,j,...) {
+    if (missing(i)) i <- seq_len(length(x))
+    if (missing(j)) j <- 0
     if (length(j) != 1) stop("Degree must be a single number")
     x@values[(i-1) * (x@degree+1) + j + 1]
 })
-setMethod("[[<-", signature(x = "dual", i="numeric", j="numeric", value = "dual"), function(x,i=seq_len(length(x)),j=0,...,value) {
+setMethod("[[<-", signature(x = "dual", i="numeric", j="numeric", value = "dual"), function(x,i,j,...,value) {
+    if (missing(i)) i <- seq_len(length(x))
+    if (missing(j)) j <- 0
     if (length(j) != 1) stop("Degree must be a single number")
     x@values[(i-1) * (x@degree+1) + j + 1] <- value
     validObject(x)
