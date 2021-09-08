@@ -32,6 +32,11 @@ setMethod("initialize", "dual",
             if (missing(degree)) {
                 degree <- ceiling(length(values) / length.out) - 1
                 remain <- -length(values) %% length.out
+            } else if (length.out == 0) {
+                .Object@values <- numeric()
+                .Object@degree <- degree
+                validObject(.Object)
+                return(.Object)
             } else {
                 remain <- length.out * (degree+1) - length(values)
                 if (remain < 0) stop("Length of values greater than the length implied")
