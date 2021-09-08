@@ -64,3 +64,12 @@ setMethod("initialize", "pointData",
         }
     }
 )
+
+setMethod("as.data.frame", "pointData",
+    function(x) {
+        data.frame(
+            x = point.x(x),
+            y = point.y(x)
+        )
+    }
+)

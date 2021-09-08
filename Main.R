@@ -27,24 +27,48 @@ threePointSolver <- function(data) {
     return(result)
 }
 
-my_plot <- function(interpolation, interval = seq(leftMostBound(interpolation),rightMostBound(interpolation),0.05)) {
-    d <- differentiate(interpolation)
-    df <- data.frame(
-        x = interval,
-        y = predict(interpolation, interval),
-        y_prime = predict(d, interval),
-        y_prime2 = predict(differentiate(d), interval)
-    )
+my_plot <- function(interpolation, interval, data, usedual) {
+    if (missing(usedual)) {
+        f <- as.piecewisePolynomial(interpolation)
+        if (is.null(f)) {
+            usedual <- TRUE
+        } else {
+            interpolation <- f
+            usedual <- FALSE
+        }
+    }
+
+    if (usedual) {
+        int <- dual(c(interval, rep(1, length(interval))), degree=2, length=length(interval), bydegree=TRUE)
+        out <- predict(interpolation, int)
+        df <- data.frame(
+            x = interval,
+            y = out[[,0]],
+            y_prime = out[[,1]],
+            y_prime2 = out[[,2]]
+        )
+    } else {
+        d <- differentiate(interpolation)
+        df <- data.frame(
+            x = interval,
+            y = predict(interpolation, interval),
+            y_prime = predict(d, interval),
+            y_prime2 = predict(differentiate(d), interval)
+        )
+    }
     df.melt <- melt(df, id = "x")
-    plot(
-        ggplot(df.melt, aes(x = x, y = value)) + 
+    p <- ggplot(df.melt, aes(x = x, y = value)) + 
         geom_line(aes(color = variable)) + 
         facet_grid(rows = variable ~ ., scales = "free_y")
-    )
+    if (!missing(data)) {
+        p <- p + geom_point(data = cbind(as.data.frame(data), variable="y"), 
+             mapping = aes(x = x, y = y), 
+             size = 1)
+    }
+    plot(p)
 }
 
 interpolation <- interpolate.patch.threePoint(data, threePointSolver)
-interpolation <- as.piecewisePolynomial(interpolation, min(x), max(x))
 
 int <- seq(min(x),max(x),0.05)
-my_plot(interpolation, interval=int)
+my_plot(interpolation, int, data)
