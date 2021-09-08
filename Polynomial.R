@@ -16,8 +16,7 @@ polynomial <- setClass("polynomial",
 setValidity("polynomial", function(object) {
     for (i in seq_len(length(object))) {
         if (!is.numeric(object@coef[i]) || is.na(object@coef[i])) {
-            print(object@coef)
-            return("Polynomial coefficients must be numeric")
+            return(paste("Polynomial coefficients must be numeric, found", paste(object@coef, collapse = ", ")))
         }
     }
     TRUE
