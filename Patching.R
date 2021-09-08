@@ -111,3 +111,37 @@ setMethod("predict", signature(object="patching"),
         return(result)
     }
 )
+
+setMethod("as.piecewisePolynomial", "patching", function(object, leftBound, rightBound) {
+    if (class(object@patch) != "patchingPolynomial") return(NULL)
+
+    if (missing(leftBound)) leftBound <- -Inf
+    if (missing(rightBound)) rightBound <- Inf
+    n <- length(object@breaks)
+    result <- piecewisePolynomial()
+
+    if (leftBound < object@breaks[1]) {
+        poly <- as.piecewisePolynomial(object@func[[1]], leftBound, object@breaks[1])
+        if (is.null(poly)) return(NULL)
+        result <- result %+% poly
+    }
+
+    for (i in seq_len(n-1)) {
+        if (leftBound < object@breaks[i] & object@breaks[i+1] < rightBound) {
+            a <- as.piecewisePolynomial(object@func[[i]], object@breaks[i], object@breaks[i+1])
+            b <- as.piecewisePolynomial(object@func[[i+1]], object@breaks[i], object@breaks[i+1])
+            p <- percentagePolynomial(object@breaks[i], object@breaks[i+1])
+            if (is.null(a) | is.null(b)) return(NULL)
+            
+            result <- result %+% (object@patch@theta(p) * (a - b) + b)
+        }
+    }
+
+    if (object@breaks[n] < rightBound) {
+        poly <- as.piecewisePolynomial(object@func[[n]], object@breaks[n], rightBound)
+        if (is.null(poly)) return(NULL)
+        result <- result %+% poly
+    }
+
+    return(result)
+})
