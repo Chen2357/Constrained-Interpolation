@@ -1,4 +1,5 @@
 source("Polynomial.R")
+source("PiecewisePolynomial.R")
 source("DualNumber.R")
 source("Patching.R")
 
