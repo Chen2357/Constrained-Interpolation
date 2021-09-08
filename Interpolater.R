@@ -83,7 +83,7 @@ joinQuadratic <- function(data, slope) {
     polynomial[[2*i-1]] <- point.y(data)[1] + (slope[1] * polynomial(c(-point.x(data)[1],1))) + ((secondDerivative/2) * polynomial(c(point.x(data)[1]^2,-2*point.x(data)[1],1)))
 }
 
-restrictedRange <- function(data, slope, tau, patch = patch.fifthDegree) {
+restrictedRange <- function(data, slope, tau, patch = patch.fifthDegree, tol = sqrt(.Machine$double.eps)) {
     x0 <- point.x(data)
     k <- slope
     b <- point.y(data)
@@ -91,9 +91,9 @@ restrictedRange <- function(data, slope, tau, patch = patch.fifthDegree) {
     p <- polynomial(c(b-k*x0, k))
 
     mu <- k^2 / (tau - abs(b))
-    delta <- (tau - abs(b)) / k
+    delta <- (tau - abs(b)) / abs(k)
 
-    if (delta >= 1) {
+    if (abs(k) < tol | delta >= 1) {
         result <- patching(
             list(
                 polynomial(0),
@@ -104,7 +104,7 @@ restrictedRange <- function(data, slope, tau, patch = patch.fifthDegree) {
             patch
         )
     } else {
-        q <- polynomial(c(0,0,mu/4))
+        q <- mu / 4 * polynomial(c(x0^2,-2*x0,1))
         result <- patching(
             list(
                 polynomial(-tau),

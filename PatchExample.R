@@ -11,9 +11,9 @@ b <- 0
 p <- polynomial(c(b-k*x0, k))
 
 mu <- k^2 / (tau - abs(b))
-delta <- (tau - abs(b)) / k
+delta <- (tau - abs(b)) / abs(k)
 
-if (delta >= 1) {
+if (abs(k) < sqrt(.Machine$double.eps) | delta >= 1) {
     result <- patching(
         list(
             polynomial(0),
@@ -24,7 +24,7 @@ if (delta >= 1) {
         fifthDegreePatch
     )
 } else {
-    q <- polynomial(c(0,0,mu/4))
+    q <- mu / 4 * polynomial(c(x0^2,-2*x0,1))
     result <- patching(
         list(
             polynomial(-tau),

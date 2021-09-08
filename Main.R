@@ -14,6 +14,7 @@ source("DualNumber.R")
 
 x <- c(1,2,3,4,5)
 y <- c(1,0,2,1,3)
+tau <- 3
 
 data <- pointData(x,y)
 
@@ -27,9 +28,9 @@ threePointSolver <- function(data) {
     return(result)
 }
 
-threePointSolver.restricted <- function(data, tau = 3) {
-    slopes <- findSlope.beta.threePoints.restricted(data, tau = tau)
-    result <- interpolate.patch.onePointSlope(data, slopes, function(data, slope, tau. = tau) restrictedRange(data, slope, tau.))
+threePointSolver.restricted <- function(data, tau. = tau) {
+    slopes <- findSlope.beta.threePoints.restricted(data, tau = tau.)
+    result <- interpolate.patch.onePointSlope(data, slopes, function(data, slope, tau.. = tau.) restrictedRange(data, slope, tau..))
     return(result)
 }
 
@@ -51,7 +52,7 @@ my_plot <- function(interpolation, interval, data, usedual) {
             x = interval,
             y = out[[,0]],
             y_prime = out[[,1]],
-            y_prime2 = out[[,2]]
+            y_prime2 = 2 * out[[,2]]
         )
     } else {
         d <- differentiate(interpolation)
@@ -74,7 +75,7 @@ my_plot <- function(interpolation, interval, data, usedual) {
     plot(p)
 }
 
-interpolation <- interpolate.patch.threePoint(data, threePointSolver)
+interpolation <- interpolate.patch.threePoint(data, threePointSolver.restricted)
 
 int <- seq(min(x),max(x),0.05)
 my_plot(interpolation, int, data)
