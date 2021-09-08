@@ -74,8 +74,8 @@ setMethod("degree<-", signature(x = "dual", value="numeric"), function(x,value) 
     x
 })
 
-setMethod("[", signature(x = "dual", i="numeric", j="missing"), function(x,i,...) dual(x@values[i %x% rep(x@degree+1,x@degree+1) - x@degree:0], x@degree))
-setMethod("[<-", signature(x = "dual", i="numeric", j="missing", value = "dual"), function(x,i,...,value) {
+setMethod("[", "dual", function(x,i,...) dual(x@values[i %x% rep(x@degree+1,x@degree+1) - x@degree:0], x@degree))
+setMethod("[<-", "dual", function(x,i,...,value) {
     if (degree(value) != degree(x)) stop("Dual degrees do not match")
     if (length(i) == 0) return(x)
     if (length(x) == 0) return(x)
@@ -84,13 +84,13 @@ setMethod("[<-", signature(x = "dual", i="numeric", j="missing", value = "dual")
     x
 })
 
-setMethod("[[", signature(x = "dual", i="numeric", j="numeric"), function(x,i,j,...) {
+setMethod("[[", "dual", function(x,i,j,...) {
     if (missing(i)) i <- seq_len(length(x))
     if (missing(j)) j <- 0
     if (length(j) != 1) stop("Degree must be a single number")
     x@values[(i-1) * (x@degree+1) + j + 1]
 })
-setMethod("[[<-", signature(x = "dual", i="numeric", j="numeric", value = "dual"), function(x,i,j,...,value) {
+setMethod("[[<-", "dual", function(x,i,j,...,value) {
     if (missing(i)) i <- seq_len(length(x))
     if (missing(j)) j <- 0
     if (length(j) != 1) stop("Degree must be a single number")
