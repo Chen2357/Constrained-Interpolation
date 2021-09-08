@@ -1,18 +1,3 @@
-#' The Default Patching Dunction
-#' 
-#' The function used in the interpolations that use patching.
-#' 
-#' The percentage of \code{a} is given by \code{3*p^2-2*p^3}. Likewise, the percentage of \code{b} is given by \code{1-3*p^2+2*p^3}.
-#' 
-#' @param a A polynomial.
-#' @param b A polynomial.
-#' @param p A polynomial that describes the phase between \code{a} and \code{b}, with value between 0 and 1.
-#' @return \code{(1-3*p^2+2*p^3)*(a-b)+b}
-defaultPatchPolynomial <- function(a,b,p) {
-    # (((1 - (3 * (p ^ 2))) + (2 * (p ^ 3))) * (a - b)) + b
-    (6 * p ^ 5 - 15 * p ^ 4 + 10 * p ^ 3) * (b - a) + a
-}
-
 #' Percentage Polynomial
 #' 
 #' The linear function that is 0 when evaluated at \code{min} and 1 when evaluated at \code{max}
@@ -106,29 +91,20 @@ joinQuadratic <- function(data, slope) {
 #' @param solver Function that returns a polynomial that interpolate 3 points, must be in the form of `function(data)`.
 #' @param patch The function used for patching, uses `defaultPatchPolynomial` by default. Must be in the form of `function(a,b,p)`.
 #' @return A piecewise polynomial.
-interpolate.patch.threePoint <- function(data, solver, patch = defaultPatchPolynomial) {
-    if (length(data) < 3) stop("`data` must have length greater than 3")
+interpolate.patch.threePoint <- function(data, solver, patch = fifthDegreePatch) {
+    if (length(data) < 3) stop("`data` must have length of at least 3")
 
     n <- length(data)
     x <- point.x(data)
 
-    previousPoly <- solver(data[1:3])
-    result <- as.piecewisePolynomial(previousPoly, x[1], x[2])
+    func <- list()
+    breaks <- x[2:(n-1)]
 
-    if (n >= 4) {
-        for (i in 2:(n-2)) {
-            thisPoly <- solver(data=data[i:(i+2)])
-            poly <- patch(previousPoly, thisPoly, percentagePolynomial(x[i],x[i+1]))
-            previousPoly <- thisPoly
-
-            result <- result %+% as.piecewisePolynomial(poly, x[i], x[i+1])
-        }
-    } else {
-        thisPoly <- solver(data=data[1:3])
+    for (i in 2:(n-1)) {
+        func <- c(func, solver(data=data[(i-1):(i+1)]))
     }
-    result <- result %+% as.piecewisePolynomial(thisPoly, x[n-1], x[n])
 
-    return(result)
+    return(patching(func, breaks, patch))
 }
 
 #' Interpolation by Patching Functions Generated at Each Point
@@ -138,21 +114,18 @@ interpolate.patch.threePoint <- function(data, solver, patch = defaultPatchPolyn
 #' @param solver Function that returns a polynomial that is generated at a point with slope. Must be in the form of `function(data, slope)`.
 #' @param patch The function used for patching, uses `defaultPatchPolynomial` by default. Must be in the form of `function(a,b,p)`.
 #' @return A piecewise polynomial.
-interpolate.patch.onePointSlope <- function(data, slopes, solver, patch = defaultPatchPolynomial) {
+interpolate.patch.onePointSlope <- function(data, slopes, solver, patch = fifthDegreePatch) {
     n <- length(data)
     x <- point.x(data)
     result <- piecewisePolynomial()
 
-    previousPoly <- solver(data = data[1], slope = slopes[1])
-    for (i in 1:(n-1)) {
-        thisPoly <- solver(data = data[i+1], slope = slopes[i+1])
-        poly <- patch(previousPoly, thisPoly, percentagePolynomial(x[i], x[i+1]))
-        previousPoly <- thisPoly
+    func <- list()
 
-        result <- result %+% as.piecewisePolynomial(poly, x[i], x[i+1])
+    for (i in seq_len(n)) {
+        func <- c(func, solver(data = data[i], slope = slopes[i]))
     }
 
-    return(result)
+    return(patching(func, x, patch))
 }
 
 #' Interpolation by Joining Functions of Each segments
