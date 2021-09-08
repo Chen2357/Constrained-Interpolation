@@ -27,6 +27,12 @@ threePointSolver <- function(data) {
     return(result)
 }
 
+threePointSolver.restricted <- function(data, tau = 3) {
+    slopes <- findSlope.beta.threePoints.restricted(data, tau = tau)
+    result <- interpolate.patch.onePointSlope(data, slopes, function(data, slope, tau. = tau) restrictedRange(data, slope, tau.))
+    return(result)
+}
+
 my_plot <- function(interpolation, interval, data, usedual) {
     if (missing(usedual)) {
         f <- as.piecewisePolynomial(interpolation)

@@ -83,6 +83,43 @@ joinQuadratic <- function(data, slope) {
     polynomial[[2*i-1]] <- point.y(data)[1] + (slope[1] * polynomial(c(-point.x(data)[1],1))) + ((secondDerivative/2) * polynomial(c(point.x(data)[1]^2,-2*point.x(data)[1],1)))
 }
 
+restrictedRange <- function(data, slope, tau, patch = patch.fifthDegree) {
+    x0 <- point.x(data)
+    k <- slope
+    b <- point.y(data)
+
+    p <- polynomial(c(b-k*x0, k))
+
+    mu <- k^2 / (tau - abs(b))
+    delta <- (tau - abs(b)) / k
+
+    if (delta >= 1) {
+        result <- patching(
+            list(
+                polynomial(0),
+                p,
+                polynomial(0)
+            ),
+            x0 + c(-1,0,1),
+            patch
+        )
+    } else {
+        q <- polynomial(c(0,0,mu/4))
+        result <- patching(
+            list(
+                polynomial(-tau),
+                p+q,
+                p,
+                p-q,
+                polynomial(tau)
+            ), 
+            x0 + delta * c(-2*sqrt(2),-1,0, 1,2*sqrt(2)),
+            patch
+        )
+    }
+    return(result)
+}
+
 ## ANCHOR Interpolation
 
 #' Interpolation by Patching Three Points Segments
