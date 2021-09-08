@@ -127,14 +127,21 @@ setMethod("as.piecewisePolynomial", "patching", function(object, leftBound, righ
     }
 
     for (i in seq_len(n-1)) {
-        if (leftBound < object@breaks[i] & object@breaks[i+1] < rightBound) {
-            a <- as.piecewisePolynomial(object@func[[i]], object@breaks[i], object@breaks[i+1])
-            b <- as.piecewisePolynomial(object@func[[i+1]], object@breaks[i], object@breaks[i+1])
-            p <- percentagePolynomial(object@breaks[i], object@breaks[i+1])
-            if (is.null(a) | is.null(b)) return(NULL)
-            
-            result <- result %+% (object@patch@theta(p) * (a - b) + b)
+        if (leftBound < object@breaks[i+1] & rightBound > object@breaks[i]) {
+            l <- max(leftBound, object@breaks[i])
+            r <- min(rightBound, object@breaks[i+1])
+        } else if (rightBound < object@breaks[i]) {
+            return(result)
+        } else {
+            next
         }
+
+        a <- as.piecewisePolynomial(object@func[[i]], l, r)
+        b <- as.piecewisePolynomial(object@func[[i+1]], l, r)
+        p <- percentagePolynomial(object@breaks[i], object@breaks[i+1])
+        if (is.null(a) | is.null(b)) return(NULL)
+        
+        result <- result %+% (object@patch@theta(p) * (a - b) + b)
     }
 
     if (object@breaks[n] < rightBound) {
