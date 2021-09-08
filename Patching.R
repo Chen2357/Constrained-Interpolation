@@ -54,9 +54,9 @@ patchingDifferentiable <- setClass(
     contains = "patchingFunction"
 )
 
-cubicPatch <- patchingPolynomial(polynomial(c(1, 0, -3, 2)))
-fifthDegreePatch <- patchingPolynomial(polynomial(c(1, 0, 0,-10, 15, -6)))
-bumpPatch <- patchingFunction(
+patch.cubic <- patchingPolynomial(polynomial(c(1, 0, -3, 2)))
+patch.fifthDegree <- patchingPolynomial(polynomial(c(1, 0, 0,-10, 15, -6)))
+patch.bump <- patchingFunction(
     theta = function(x) exp(1-1/(1-x^2)),
     description = function(a, b) paste("e^(1-1/(", 1-(polynomial(c(-a/(b-a), 1/(b-a)))^2), "))", sep="")
 )

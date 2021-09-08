@@ -91,7 +91,7 @@ joinQuadratic <- function(data, slope) {
 #' @param solver Function that returns a polynomial that interpolate 3 points, must be in the form of `function(data)`.
 #' @param patch The function used for patching, uses `defaultPatchPolynomial` by default. Must be in the form of `function(a,b,p)`.
 #' @return A piecewise polynomial.
-interpolate.patch.threePoint <- function(data, solver, patch = fifthDegreePatch) {
+interpolate.patch.threePoint <- function(data, solver, patch = patch.fifthDegree) {
     if (length(data) < 3) stop("`data` must have length of at least 3")
 
     n <- length(data)
@@ -114,7 +114,7 @@ interpolate.patch.threePoint <- function(data, solver, patch = fifthDegreePatch)
 #' @param solver Function that returns a polynomial that is generated at a point with slope. Must be in the form of `function(data, slope)`.
 #' @param patch The function used for patching, uses `defaultPatchPolynomial` by default. Must be in the form of `function(a,b,p)`.
 #' @return A piecewise polynomial.
-interpolate.patch.onePointSlope <- function(data, slopes, solver, patch = fifthDegreePatch) {
+interpolate.patch.onePointSlope <- function(data, slopes, solver, patch = patch.fifthDegree) {
     n <- length(data)
     x <- point.x(data)
     result <- piecewisePolynomial()
