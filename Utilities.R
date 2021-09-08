@@ -19,7 +19,7 @@ setGeneric("degree<-", function(x,value) standardGeneric("degree<-"))
 setGeneric("leftMostBound", function(object) standardGeneric("leftMostBound"))
 setGeneric("rightMostBound", function(object) standardGeneric("rightMostBound"))
 
-setGeneric("as.piecewisePolynomial", function(object, leftBound, rightBound) standardGeneric("as.piecewisePolynomial"))
+setGeneric("as.piecewisePolynomial", function(object, ...) standardGeneric("as.piecewisePolynomial"))
 
 # ANCHOR Differentiation
 setGeneric("differentiate", function(x) standardGeneric("differentiate"))

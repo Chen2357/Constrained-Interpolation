@@ -304,11 +304,21 @@ setMethod("show", "piecewisePolynomial",
     }
 )
 
-setMethod("as.piecewisePolynomial", signature(object = "polynomial", leftBound = "numeric", rightBound = "numeric"), function(object, leftBound, rightBound) piecewisePolynomial(leftBound, rightBound, list(object)))
+setMethod("as.piecewisePolynomial", "polynomial", function(object, leftBound, rightBound) {
+    if (missing(leftBound)) leftBound <- -Inf
+    if (missing(rightBound)) rightBound <- Inf
+    return(piecewisePolynomial(leftBound, rightBound, list(object)))
+})
 
-setMethod("as.piecewisePolynomial", signature(object = "numeric", leftBound = "numeric", rightBound = "numeric"), function(object, leftBound, rightBound) piecewisePolynomial(leftBound, rightBound, list(polynomial(c(object)))))
+setMethod("as.piecewisePolynomial", "numeric", function(object, leftBound, rightBound) {
+    if (missing(leftBound)) leftBound <- -Inf
+    if (missing(rightBound)) rightBound <- Inf
+    piecewisePolynomial(leftBound, rightBound, list(polynomial(c(object))))
+})
 
-setMethod("as.piecewisePolynomial", signature(object = "piecewisePolynomial", leftBound = "numeric", rightBound = "numeric"), function(object, leftBound, rightBound) {
+setMethod("as.piecewisePolynomial", "piecewisePolynomial", function(object, leftBound, rightBound) {
+    if (missing(leftBound)) leftBound <- leftMostBound(object)
+    if (missing(rightBound)) rightBound <- rightMostBound(object)
     leftBounds <- c()
     rightBounds <- c()
     polynomial <- list()
