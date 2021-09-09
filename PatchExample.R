@@ -21,7 +21,7 @@ if (abs(k) < sqrt(.Machine$double.eps) | delta >= 1) {
             polynomial(0)
         ),
         x0 + c(-1,0,1),
-        fifthDegreePatch
+        patch.fifthDegree
     )
 } else {
     q <- mu / 4 * polynomial(c(x0^2,-2*x0,1))
@@ -34,7 +34,7 @@ if (abs(k) < sqrt(.Machine$double.eps) | delta >= 1) {
             polynomial(tau)
         ), 
         x0 + delta * c(-2*sqrt(2),-1,0, 1,2*sqrt(2)),
-        fifthDegreePatch
+        patch.fifthDegree
     )
 }
 
