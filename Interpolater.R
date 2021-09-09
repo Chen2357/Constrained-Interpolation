@@ -107,11 +107,11 @@ restrictedRange <- function(data, slope, tau, patch = patch.fifthDegree, tol = s
         q <- mu / 4 * polynomial(c(x0^2,-2*x0,1))
         result <- patching(
             list(
-                polynomial(-tau),
-                p+q,
+                polynomial(ifelse(k > 0, -tau, tau)),
+                p + q * ifelse(k > 0, 1, -1),
                 p,
-                p-q,
-                polynomial(tau)
+                p + q * ifelse(k > 0, -1, 1),
+                polynomial(ifelse(k > 0, tau, -tau))
             ), 
             x0 + delta * c(-2*sqrt(2),-1,0, 1,2*sqrt(2)),
             patch

@@ -12,8 +12,8 @@ source("Interpolater.R")
 source("QuadraticProgramming.R")
 source("DualNumber.R")
 
-x <- c(1,2,3,4,5)
-y <- c(1,0,2,1,3)
+x <- c(1, 1.1, 3, 4.2, 5) * 0.01
+y <- c(1, -1, 2.5, 3, -2)
 tau <- 3
 
 data <- pointData(x,y)
@@ -77,5 +77,5 @@ my_plot <- function(interpolation, interval, data, usedual) {
 
 interpolation <- interpolate.patch.threePoint(data, threePointSolver.restricted)
 
-int <- seq(min(x),max(x),0.05)
+int <- seq(min(x),max(x),0.0005)
 my_plot(interpolation, int, data)
