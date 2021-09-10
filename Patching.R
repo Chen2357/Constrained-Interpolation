@@ -91,13 +91,13 @@ setMethod("predict", signature(object="patching"),
             result <- dual(0, degree = degree(newdata), length = length(newdata))
         }
 
+        if (n == 1) return(predict(object@func[[1]], newdata))
+
         I <- which(newdata <= object@breaks[1])
         result[I] <- predict(object@func[[1]], newdata[I])
 
         I <- which(newdata > object@breaks[n])
         result[I] <- predict(object@func[[n]], newdata[I])
-
-        if (n == 1) return(result)
 
         for (i in seq_len(n-1)) {
             I <- which(object@breaks[i] < newdata & newdata <= object@breaks[i+1])
@@ -120,9 +120,7 @@ setMethod("as.piecewisePolynomial", "patching", function(object, leftBound, righ
     n <- length(object@breaks)
     result <- piecewisePolynomial()
 
-    if (n==1) {
-        return(as.piecewisePolynomial(object@func[[1]], leftBound, rightBound))
-    }
+    if (n==1) return(as.piecewisePolynomial(object@func[[1]], leftBound, rightBound))
 
     if (leftBound < object@breaks[1]) {
         r <- min(object@breaks[1], rightBound)
