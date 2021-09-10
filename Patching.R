@@ -130,7 +130,7 @@ setMethod("as.piecewisePolynomial", "patching", function(object, leftBound, righ
     }
 
     for (i in seq_len(n-1)) {
-        if (leftBound <= object@breaks[i+1] & rightBound >= object@breaks[i]) {
+        if (leftBound < object@breaks[i+1] & rightBound > object@breaks[i]) {
             l <- max(leftBound, object@breaks[i])
             r <- min(rightBound, object@breaks[i+1])
         } else if (rightBound < object@breaks[i]) {

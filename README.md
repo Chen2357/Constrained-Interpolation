@@ -3,7 +3,7 @@ A 2021 summer research project
 
 # Todo
 - [ ] Check input.
-- [ ] Improve `as.piecewisePolynomial` for class `patching`. Currently, it results in redundant zero length segments, which could hinder the performance.
+- [x] Improve `as.piecewisePolynomial` for class `patching`. Currently, it results in redundant zero length segments, which could hinder the performance.
 - [ ] Documentation.
 - [ ] Turn it into a package.
 
