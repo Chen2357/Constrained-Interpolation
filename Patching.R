@@ -120,8 +120,13 @@ setMethod("as.piecewisePolynomial", "patching", function(object, leftBound, righ
     n <- length(object@breaks)
     result <- piecewisePolynomial()
 
+    if (n==1) {
+        return(as.piecewisePolynomial(object@func[[1]], leftBound, rightBound))
+    }
+
     if (leftBound < object@breaks[1]) {
-        poly <- as.piecewisePolynomial(object@func[[1]], leftBound, object@breaks[1])
+        r <- min(object@breaks[1], rightBound)
+        poly <- as.piecewisePolynomial(object@func[[1]], leftBound, r)
         if (is.null(poly)) return(NULL)
         result <- result %+% poly
     }
@@ -145,7 +150,8 @@ setMethod("as.piecewisePolynomial", "patching", function(object, leftBound, righ
     }
 
     if (object@breaks[n] < rightBound) {
-        poly <- as.piecewisePolynomial(object@func[[n]], object@breaks[n], rightBound)
+        l <- max(object@breaks[n], leftBound)
+        poly <- as.piecewisePolynomial(object@func[[n]], l, rightBound)
         if (is.null(poly)) return(NULL)
         result <- result %+% poly
     }
