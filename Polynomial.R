@@ -66,6 +66,11 @@ setMethod("-", signature(e1 = "polynomial", e2 = "numeric"), function(e1, e2) {
     return(e1)
 })
 
+setMethod("-", signature(e1 = "polynomial"), function(e1, e2) {
+    coef(e1) <- -coef(e1)
+    return(e1)
+})
+
 setMethod("*", signature(e1 = "polynomial", e2 = "polynomial"), function(e1, e2) {
     product <- polynomial(degree = (degree(e1) + degree(e2)))
 

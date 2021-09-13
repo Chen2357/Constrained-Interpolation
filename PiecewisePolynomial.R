@@ -24,8 +24,8 @@ setValidity("piecewisePolynomial", function(object) {
         "Numbers of ranges and polynomials are mismatched"
     } else {
         for (i in seq_len(length(object@leftBound))) {
-            if (object@leftBound[i] > object@rightBound[i]) {
-                return("Left bound cannot be greater than right bound")
+            if (object@leftBound[i] >= object@rightBound[i]) {
+                return("Left bound must be less than right bound")
             }
             else if (object@leftBound[i] < object@leftBound && object@leftBound < object@rightBound[i]) {
                 return("Ranges cannot overlap")
@@ -208,6 +208,10 @@ setMethod("-", signature(e1 = "polynomial", e2 = "piecewisePolynomial"), functio
 setMethod("-", signature(e1 = "numeric", e2 = "piecewisePolynomial"), function(e1, e2) {
     e2@polynomial <- lapply(e2@polynomial, function(x) e1 - x)
     return(e2)
+})
+setMethod("-", signature(e1 = "piecewisePolynomial"), function(e1, e2) {
+    e2@polynomial <- lapply(e2@polynomial, function(x) -x)
+    return(e1)
 })
 
 ### ANCHOR Division
