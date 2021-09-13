@@ -8,16 +8,13 @@
 patchingFunction <- setClass(
     "patchingFunction",
     slots = c(
-        theta = "function",
-        description = "function"
+        theta = "function"
     )
 )
 
 setMethod("initialize", "patchingFunction",
-    function(.Object, theta, description) {
+    function(.Object, theta) {
         .Object@theta <- theta
-        .Object@description <- description
-
         return(.Object)
     }
 )
@@ -40,26 +37,14 @@ setMethod("initialize", "patchingPolynomial",
     function(.Object, polynomial) {
         .Object@polynomial <- polynomial
         .Object@theta <- as.function(polynomial)
-        .Object@description <- function(a, b) as.character(predict(polynomial, percentagePolynomial(a, b)))
-
         return(.Object)
     }
 )
 
-patchingDifferentiable <- setClass(
-    "patchingDifferentiable",
-    slots = c(
-        derivative = "patchingFunction"
-    ),
-    contains = "patchingFunction"
-)
-
+patch.linear <- patchingPolynomial(polynomial(c(1, -1)))
 patch.cubic <- patchingPolynomial(polynomial(c(1, 0, -3, 2)))
 patch.fifthDegree <- patchingPolynomial(polynomial(c(1, 0, 0,-10, 15, -6)))
-patch.bump <- patchingFunction(
-    theta = function(x) exp(1-1/(1-x^2)),
-    description = function(a, b) paste("e^(1-1/(", 1-(polynomial(c(-a/(b-a), 1/(b-a)))^2), "))", sep="")
-)
+patch.bump <- patchingFunction(function(x) exp(1-1/(1-x^2)))
 
 patching <- setClass(
     "patching",
