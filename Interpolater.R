@@ -186,6 +186,7 @@ interpolate.twoPointSlope <- function(data, slopes, solver, ...) {
 
 rrinterpolate <- function(x, y, min, max) {
     if (length(x) != length(y)) stop("Incompatible lengths of x and y")
+    if (any(y < ifelse(missing(min), -Inf, min) | y > ifelse(missing(max), Inf, max))) stop("Some y values are not in the range specified")
     shift <- 0
     scale <- 1
     od <- order(x)
@@ -232,7 +233,7 @@ rrinterpolate <- function(x, y, min, max) {
 
     data <- pointData(x[od], (y[od] - shift)*scale)
 
-    interpolation <- interpolate.patch.threePoint(data, threePointSolver.restricted)
+    interpolation <- interpolate.patch.threePoint(data, threePointSolver)
     interpolation <- interpolation / scale + shift
     return(interpolation)
 }
