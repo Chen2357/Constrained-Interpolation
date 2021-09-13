@@ -210,6 +210,12 @@ setMethod("-", signature(e1 = "numeric", e2 = "piecewisePolynomial"), function(e
     return(e2)
 })
 
+### ANCHOR Division
+setMethod("/", signature(e1 = "piecewisePolynomial", e2 = "numeric"), function(e1, e2) {
+    e1@polynomial <- lapply(e1@polynomial, function(x) x / e2)
+    return(e1)
+})
+
 ### ANCHOR Append
 setMethod("%+%", signature(e1 = "piecewisePolynomial", e2 = "piecewisePolynomial"), function(e1, e2) {
     result <- piecewisePolynomial(c(e1@leftBound, e2@leftBound), c(e1@rightBound, e2@rightBound), c(e1@polynomial, e2@polynomial))

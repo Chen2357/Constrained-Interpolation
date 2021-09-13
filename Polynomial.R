@@ -79,8 +79,9 @@ setMethod("*", signature(e1 = "polynomial", e2 = "polynomial"), function(e1, e2)
 
 setMethod("*", signature(e1 = "polynomial", e2 = "numeric"), function(e1, e2) return(polynomial(coef(e1) * e2)))
 
-
 setMethod("*", signature(e1 = "numeric", e2 = "polynomial"), function(e1, e2) return(polynomial(e1 * coef(e2))))
+
+setMethod("/", signature(e1 = "polynomial", e2 = "numeric"), function(e1, e2) return(polynomial(coef(e1) / e2)))
 
 setMethod("^", signature(e1 = "polynomial", e2 = "numeric"), function(e1, e2) {
     if (e2%%1 != 0) {
