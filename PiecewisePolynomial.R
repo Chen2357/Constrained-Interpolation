@@ -306,7 +306,7 @@ setMethod("as.data.frame", "piecewisePolynomial", function(x, xlab="x", rangeFor
 
 setMethod("show", "piecewisePolynomial",
     function(object) {
-        print(as.character(object))
+        print(noquote(as.character(object)))
     }
 )
 
