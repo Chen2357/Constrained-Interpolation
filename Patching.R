@@ -97,7 +97,7 @@ setMethod("predict", signature(object="patching"),
     }
 )
 
-setMethod("as.piecewisePolynomial", "patching", function(object, leftBound, rightBound) {
+setMethod("as.piecewisePolynomial", "patching", function(object, leftBound, rightBound, tol = sqrt(.Machine$double.eps)) {
     if (class(object@patch) != "patchingPolynomial") return(NULL)
 
     if (missing(leftBound)) leftBound <- -Inf
@@ -115,7 +115,7 @@ setMethod("as.piecewisePolynomial", "patching", function(object, leftBound, righ
     }
 
     for (i in seq_len(n-1)) {
-        if (leftBound < object@breaks[i+1] & rightBound > object@breaks[i]) {
+        if (leftBound < object@breaks[i+1] - tol & rightBound > object@breaks[i] + tol) {
             l <- max(leftBound, object@breaks[i])
             r <- min(rightBound, object@breaks[i+1])
         } else if (rightBound < object@breaks[i]) {
@@ -128,7 +128,7 @@ setMethod("as.piecewisePolynomial", "patching", function(object, leftBound, righ
         b <- as.piecewisePolynomial(object@func[[i+1]], l, r)
         p <- percentagePolynomial(object@breaks[i], object@breaks[i+1])
         if (is.null(a) | is.null(b)) return(NULL)
-        
+
         result <- result %+% (object@patch@theta(p) * (a - b) + b)
     }
 
