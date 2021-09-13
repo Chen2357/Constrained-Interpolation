@@ -154,7 +154,6 @@ interpolate.patch.threePoint <- function(data, solver, patch = patch.fifthDegree
 interpolate.patch.onePointSlope <- function(data, slopes, solver, patch = patch.fifthDegree) {
     n <- length(data)
     x <- point.x(data)
-    result <- piecewisePolynomial()
 
     func <- list()
 
@@ -183,4 +182,57 @@ interpolate.twoPointSlope <- function(data, slopes, solver, ...) {
     }
 
     return(result)
+}
+
+rrinterpolate <- function(x, y, min, max) {
+    if (length(x) != length(y)) stop("Incompatible lengths of x and y")
+    shift <- 0
+    scale <- 1
+    od <- order(x)
+
+    x <- x[od]
+    y <- y[od]
+
+    if (missing(min) | missing(max)) {
+        if (missing(min) & missing(max)) {
+            threePointSolver <- quadraticPolynomial
+        } else {
+            if (missing(max)) {
+                shift <- min
+            } else {
+                shift <- max
+                scale <- -1
+            }
+            threePointSolver <- function(data) {
+                result <- quadraticPolynomial(data)
+                ce <- coef(result)
+                if (ce[2] * ce[2] - 4 * ce[1] * ce[3] < 0) return(result)
+
+                slopes <- findSlope.beta.threePoints(data)
+                result <- interpolate.patch.onePointSlope(data, slopes, quadratic.point.slope.extrema)
+                return(result)
+            }
+        }
+    } else {
+        tau <- (max - min) / 2
+        shift <- (max + min) / 2
+        threePointSolver <- function(data, tau. = tau) {
+            result <- quadraticPolynomial(data)
+            ce <- coef(result)
+            ex <- -ce[1]/(2*ce[2])
+            if (ex < point.x(data)[1] | point.x(data)[3] < ex) return(result)
+            if (abs(ce[0]-ce[1]*ce[1]/(4*ce[2])) < tau) return(result)
+
+            slopes <- findSlope.beta.threePoints.restricted(data, tau = tau.)
+            result <- interpolate.patch.onePointSlope(data, slopes, function(data, slope, tau.. = tau.) restrictedRange(data, slope, tau..))
+            
+            return(result)
+        }
+    }
+
+    data <- pointData(x[od], (y[od] - shift)*scale)
+
+    interpolation <- interpolate.patch.threePoint(data, threePointSolver.restricted)
+    interpolation <- interpolation / scale + shift
+    return(interpolation)
 }
