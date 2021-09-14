@@ -189,10 +189,6 @@ rrinterpolate <- function(x, y, min, max) {
     if (any(y < ifelse(missing(min), -Inf, min) | y > ifelse(missing(max), Inf, max))) stop("Some y values are not in the range specified")
     shift <- 0
     scale <- 1
-    od <- order(x)
-
-    x <- x[od]
-    y <- y[od]
 
     if (missing(min) | missing(max)) {
         if (missing(min) & missing(max)) {
@@ -220,9 +216,9 @@ rrinterpolate <- function(x, y, min, max) {
         threePointSolver <- function(data, tau. = tau) {
             result <- quadraticPolynomial(data)
             ce <- coef(result)
-            ex <- -ce[1]/(2*ce[2])
+            ex <- -ce[2]/(2*ce[3])
             if (ex < point.x(data)[1] | point.x(data)[3] < ex) return(result)
-            if (abs(ce[0]-ce[1]*ce[1]/(4*ce[2])) < tau) return(result)
+            if (abs(ce[1]-ce[2]*ce[2]/(4*ce[3])) < tau) return(result)
 
             slopes <- findSlope.beta.threePoints.restricted(data, tau = tau.)
             result <- interpolate.patch.onePointSlope(data, slopes, function(data, slope, tau.. = tau.) restrictedRange(data, slope, tau..))
@@ -231,6 +227,7 @@ rrinterpolate <- function(x, y, min, max) {
         }
     }
 
+    od <- order(x)
     data <- pointData(x[od], (y[od] - shift)*scale)
 
     interpolation <- interpolate.patch.threePoint(data, threePointSolver)
