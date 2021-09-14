@@ -1,4 +1,4 @@
-rrplot <- function(interpolation, interval, x.point, y.point, res = 1000, autodiff) {
+rrplot <- function(interpolation, interval, x.point, y.point, limits, res = 1000, autodiff) {
     if (missing(interval)) {
         if (!missing(x.point)) {
             interval <- seq(min(x.point), max(x.point), (max(x.point)-min(x.point))/res)
@@ -51,6 +51,14 @@ rrplot <- function(interpolation, interval, x.point, y.point, res = 1000, autodi
         p <- p + geom_point(data = cbind(as.data.frame(data), variable="y"), 
              mapping = aes(x = x, y = y), 
              size = 1)
+    }
+    if (!missing(limits)) {
+        p <- p + geom_hline(
+            data = cbind(data.frame(limits), variable="y"),
+            aes(yintercept = limits),
+            color = "blue",
+            linetype = "dashed"
+        )
     }
     plot(p)
 }
