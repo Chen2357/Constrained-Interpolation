@@ -1,38 +1,3 @@
-#' Percentage Polynomial
-#' 
-#' The linear function that is 0 when evaluated at \code{min} and 1 when evaluated at \code{max}
-#' 
-#' @param min The value at which the function is 0.
-#' @param max The value at which the function is 1.
-#' @return \code{(x-min)/(max-min)}
-percentagePolynomial <- function(min,max) {
-    (1/(max-min)) * polynomial(c(-min,1))
-}
-
-#' Linear Polynomial Given Point and Slope
-#' 
-#' @param x A `pointData` type. It will be converted into `x` and `y`. Only the first three values will be used.
-#' @param x The vector of x-coordinates. May be assigned directly.
-#' @param y The vector of y-coordinates. May be assigned directly.
-#' @param slope The slope at the point.
-#' @return The linear polynomial that goes through the point with the given slope.
-linearPolynomial <- function(data, x = point.x(data), y = point.y(data), slope) {
-    if (missing(slope)) {
-        slope <- (y[2] - y[1]) / (x[2] - x[1])
-    }
-    return(polynomial(c(y[1] - slope * x[1], slope)))
-}
-
-#' Quadratic Function Through Three Points
-#' 
-#' @param x A `pointData` type. It will be converted into `x` and `y`. Only the first three values will be used.
-#' @param x The vector of x-coordinates. May be assigned directly.
-#' @param y The vector of y-coordinates. May be assigned directly.
-#' @return The quadratic polynomial that goes through \code{(x[1],y[1])}, \code{(x[2],y[2])}, and \code{(x[3],y[3])}.
-quadraticPolynomial <- function(data, x = point.x(data), y = point.y(data)) {
-    y[1] + ( ((y[2]-y[1])/(x[2]-x[1])) * polynomial(c(-x[1],1)) ) + ( (((y[2]-y[1])/(x[2]-x[1])-(y[3]-y[2])/(x[3]-x[2]))/(x[1]-x[3])) * polynomial(c(-x[1],1)) * polynomial(c(-x[2],1)) )
-}
-
 #' Quadratic Function Through Two Points with Given Slope
 #' 
 #' This function produces the quadratic that goes through (x[1],y[1]) and (x[2],y[2]) and has a certain slope at (x[1],y[1])
@@ -53,19 +18,6 @@ patchProjectQuadratic <- function(data, slopes, patch = defaultPatchPolynomial) 
     )
 }
 
-#' Quadratic Function Through a Point and with a Given Slope and with Given y-value of Extrema
-#' 
-#' @param data A `pointData` type containing a signle point. It will be converted to `x` and `y`
-#' @param x The x-coordinate of a point. May be assigned directly.
-#' @param y The y-coordinate of a point. May be assigned directly.
-#' @param slope The slope at point `(x,y)``
-#' @param extreme The y-value of the extrema.
-#' @return The quadratic that goes through `(x,y)` with slope `k` and tangent to the `y=extrema`.
-quadratic.point.slope.extrema <- function(data, x = point.x(data), y = point.y(data), slope, extrema = 0, tol = sqrt(.Machine$double.eps)) {
-    if(abs(y-extrema) < tol) return(polynomial(y))
-    slope^2/(4*(y-extrema))*polynomial(c(x^2,-2*x,1)) + slope * polynomial(c(-x,1)) + y
-}
-
 #' Connecting  Two Quadratic Functions
 #' 
 #' Between two points, the function is constructed by connecting the two quadratic functions that (1) go through each respective point with the prescibed slope, (2) are smoothly connected, (3) have the same absolute curvature.
@@ -83,86 +35,7 @@ joinQuadratic <- function(data, slope) {
     polynomial[[2*i-1]] <- point.y(data)[1] + (slope[1] * polynomial(c(-point.x(data)[1],1))) + ((secondDerivative/2) * polynomial(c(point.x(data)[1]^2,-2*point.x(data)[1],1)))
 }
 
-restrictedRange <- function(data, slope, tau, patch = patch.fifthDegree, tol = sqrt(.Machine$double.eps)) {
-    x0 <- point.x(data)
-    k <- slope
-    b <- point.y(data)
-
-    p <- polynomial(c(b-k*x0, k))
-
-    mu <- k^2 / (tau - abs(b))
-    delta <- (tau - abs(b)) / abs(k)
-
-    if (abs(k) < tol | delta >= 1) {
-        result <- patching(
-            list(
-                polynomial(0),
-                p,
-                polynomial(0)
-            ),
-            x0 + c(-1,0,1),
-            patch
-        )
-    } else {
-        q <- mu / 4 * polynomial(c(x0^2,-2*x0,1))
-        result <- patching(
-            list(
-                polynomial(ifelse(k > 0, -tau, tau)),
-                p + q * ifelse(k > 0, 1, -1),
-                p,
-                p + q * ifelse(k > 0, -1, 1),
-                polynomial(ifelse(k > 0, tau, -tau))
-            ), 
-            x0 + delta * c(-2*sqrt(2),-1,0, 1,2*sqrt(2)),
-            patch
-        )
-    }
-    return(result)
-}
-
 ## ANCHOR Interpolation
-
-#' Interpolation by Patching Three Points Segments
-#' 
-#' @param data A `pointData` type that stores all the points to be interpolated.
-#' @param solver Function that returns a polynomial that interpolate 3 points, must be in the form of `function(data)`.
-#' @param patch The function used for patching, uses `defaultPatchPolynomial` by default. Must be in the form of `function(a,b,p)`.
-#' @return A piecewise polynomial.
-interpolate.patch.threePoint <- function(data, solver, patch = patch.fifthDegree) {
-    if (length(data) < 3) stop("`data` must have length of at least 3")
-
-    n <- length(data)
-    x <- point.x(data)
-
-    func <- list()
-    breaks <- x[2:(n-1)]
-
-    for (i in 2:(n-1)) {
-        func <- c(func, solver(data=data[(i-1):(i+1)]))
-    }
-
-    return(patching(func, breaks, patch))
-}
-
-#' Interpolation by Patching Functions Generated at Each Point
-#' 
-#' @param data A `pointData` type that stores all the points to be interpolated.
-#' @param slopes A `vector` type that stores all the slopes correspond to each point.
-#' @param solver Function that returns a polynomial that is generated at a point with slope. Must be in the form of `function(data, slope)`.
-#' @param patch The function used for patching, uses `defaultPatchPolynomial` by default. Must be in the form of `function(a,b,p)`.
-#' @return A piecewise polynomial.
-interpolate.patch.onePointSlope <- function(data, slopes, solver, patch = patch.fifthDegree) {
-    n <- length(data)
-    x <- point.x(data)
-
-    func <- list()
-
-    for (i in seq_len(n)) {
-        func <- c(func, solver(data = data[i], slope = slopes[i]))
-    }
-
-    return(patching(func, x, patch))
-}
 
 #' Interpolation by Joining Functions of Each segments
 #' 
@@ -182,55 +55,4 @@ interpolate.twoPointSlope <- function(data, slopes, solver, ...) {
     }
 
     return(result)
-}
-
-rrinterpolate <- function(x, y, min, max) {
-    if (length(x) != length(y)) stop("Incompatible lengths of x and y")
-    if (any(y < ifelse(missing(min), -Inf, min) | y > ifelse(missing(max), Inf, max))) stop("Some y values are not in the range specified")
-    shift <- 0
-    scale <- 1
-
-    if (missing(min) | missing(max)) {
-        if (missing(min) & missing(max)) {
-            threePointSolver <- quadraticPolynomial
-        } else {
-            if (missing(max)) {
-                shift <- min
-            } else {
-                shift <- max
-                scale <- -1
-            }
-            threePointSolver <- function(data) {
-                result <- quadraticPolynomial(data)
-                ce <- coef(result)
-                if (ce[2] * ce[2] - 4 * ce[1] * ce[3] < 0) return(result)
-
-                slopes <- findSlope.beta.threePoints(data)
-                result <- interpolate.patch.onePointSlope(data, slopes, quadratic.point.slope.extrema)
-                return(result)
-            }
-        }
-    } else {
-        tau <- (max - min) / 2
-        shift <- (max + min) / 2
-        threePointSolver <- function(data, tau. = tau) {
-            result <- quadraticPolynomial(data)
-            ce <- coef(result)
-            ex <- -ce[2]/(2*ce[3])
-            if (ex < point.x(data)[1] | point.x(data)[3] < ex) return(result)
-            if (abs(ce[1]-ce[2]*ce[2]/(4*ce[3])) < tau) return(result)
-
-            slopes <- findSlope.beta.threePoints.restricted(data, tau = tau.)
-            result <- interpolate.patch.onePointSlope(data, slopes, function(data, slope, tau.. = tau.) restrictedRange(data, slope, tau..))
-            
-            return(result)
-        }
-    }
-
-    od <- order(x)
-    data <- pointData(x[od], (y[od] - shift)*scale)
-
-    interpolation <- interpolate.patch.threePoint(data, threePointSolver)
-    interpolation <- interpolation / scale + shift
-    return(interpolation)
 }
