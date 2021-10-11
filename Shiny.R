@@ -38,10 +38,16 @@ server <- function(input, output) {
     observeEvent(input$view, {
         x <- as.numeric(unlist(strsplit(input$xvalue,",")))
         y <- as.numeric(unlist(strsplit(input$yvalue,",")))
+        k <- as.numeric(unlist(strsplit(input$slopes,",")))
         high <- as.numeric(input$upper)
         low <- as.numeric(input$lower)
 
-        interpolation <- rrinterpolate(x, y, low, high)
+        if (length(k) == 0) {
+            interpolation <- rrinterpolate(x, y, low, high)
+        } else {
+            interpolation <- rrinterpolate.slope(x, y, k, low, high)
+        }
+
         View(interpolation)
     })
 
