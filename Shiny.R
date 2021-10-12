@@ -10,8 +10,9 @@ ui <- fluidPage(
             actionButton("view" ,"View", class = "btn btn-primary"),
             actionButton("stop", "Stop")
         ),
-        mainPanel(
-            tags$h2("Range Restricted C^2 Interpolant"),
+        mainPanel( 
+            ithMathJax(),
+            tags$h2("Range Restricted \\(C^2\\) Interpolation"),
             plotOutput("plot")
         )
     )
