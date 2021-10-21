@@ -3,7 +3,8 @@ A 2021 summer research project
 
 # Major Advancements
 - [ ] Documentation.
-- [ ] Turn it into a package. ([info](https://swcarpentry.github.io/r-novice-inflammation/08-making-packages-R/))
+- [x] Turn it into a package. ([info](https://swcarpentry.github.io/r-novice-inflammation/08-making-packages-R/))
+    - See [rrinterp](https://github.com/Chen2357/rrinterp).
 
 # Known Bugs
 - [ ] The method `as.piecewisePolynomial` for class `patching` does not work as desired.
