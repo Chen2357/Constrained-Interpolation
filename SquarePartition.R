@@ -217,7 +217,7 @@ partition.whitney <- function(x, y) {
         squarey <- result@squares@y[i]
         squarew <- result@squares@w[i]
 
-        count <- sum((squarex - squarew <= x & x <= squarex + 2 * squarew) & (squarey - squarew <= y & y <= squarey + 2 * squarew))
+        count <- sum((squarex - squarew <= x & x < squarex + 2 * squarew) & (squarey - squarew <= y & y < squarey + 2 * squarew))
 
         if (count > 1) {
             bisection <- bisect.whitney(result@squares[i])
@@ -236,7 +236,7 @@ rect.whitney <- function(decomposition, x, y) {
     for (i in seq_len(length(decomposition@squares))) {
         square <- decomposition@squares[i]
 
-        hasPoint <- any((square@x <= x & x <= square@x + square@w) & (square@y <= y & y <= square@y + square@w))
+        hasPoint <- any((square@x <= x & x < square@x + square@w) & (square@y <= y & y < square@y + square@w))
         col <- ifelse(hasPoint, "pink", "lightgreen")
 
         rect(square@x, square@y, square@x + square@w, square@y + square@w, col = col)
@@ -245,8 +245,8 @@ rect.whitney <- function(decomposition, x, y) {
     points(x, y, col = "red")
 }
 
-x <- c(0.2, 0.8, 0.4)
-y <- c(0.8, 0.2, 0.9)
+x <- c(0.2,0.2,0.4,0.3)
+y <- c(0.3,0.1,0.5,0.9)
 
 W <- partition.whitney(x, y)
 
