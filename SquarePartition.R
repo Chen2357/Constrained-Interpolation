@@ -245,7 +245,7 @@ rect.whitney <- function(decomposition, x, y) {
     points(x, y, col = "red")
 }
 
-search.whiteney <- function(decomposition, x, y) {
+search.whitney <- function(decomposition, x, y) {
     result <- whitneySquare()
 
     for (i in seq_len(length(x))) {
