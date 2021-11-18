@@ -100,7 +100,7 @@ setMethod("initialize", "whitneyDecomposition",
     function(.Object) {
         .Object@squares <- whitneySquare()
         .Object@order <- 5
-        .Object@root <- 0
+        .Object@root <- NA_integer_
         .Object@nodes <- matrix(nrow = 0, ncol = .Object@order-1)
         .Object@children <- matrix(nrow = 0, ncol = .Object@order)
 
@@ -119,9 +119,9 @@ insert.whitney <- function(decomposition, squares) {
         n <- decomposition@root
         key <- lastIndex + squareIndex
 
-        if (n == 0) {
-            decomposition@nodes <- rbind(decomposition@nodes, c(key, rep(0, order - 2)))
-            decomposition@children <- rbind(decomposition@children, rep(0, order))
+        if (is.na(n)) {
+            decomposition@nodes <- rbind(decomposition@nodes, c(key, rep(NA_integer_, order - 2)))
+            decomposition@children <- rbind(decomposition@children, rep(NA_integer_, order))
             decomposition@root <- nrow(decomposition@nodes)
             next
         }
@@ -133,15 +133,15 @@ insert.whitney <- function(decomposition, squares) {
 
         while (TRUE) {
             s <- decomposition@nodes[n,]
-            i <- sum(decomposition@squares[s[s != 0]] < squares[squareIndex], na.rm=TRUE)
-            notFull <- any(s == 0)
+            i <- sum(decomposition@squares[s[!is.na(s)]] < squares[squareIndex], na.rm=TRUE)
+            notFull <- any(is.na(s))
 
             nodePath <- c(nodePath, n)
             insertPath <- c(insertPath, i)
             
             if (notFull) lastNotFull <- length(nodePath)
             
-            if (decomposition@children[n,1] == 0) {
+            if (is.na(decomposition@children[n,1])) {
                 if (notFull) {
                     decomposition@nodes[n,] <- append(s[1:(order-2)], key, i)
                     lastNotFull <- NULL
@@ -155,7 +155,7 @@ insert.whitney <- function(decomposition, squares) {
         if (!is.null(lastNotFull)) {
             medium <- ceiling(order/2)
             hold <- key
-            holdChild <- 0
+            holdChild <- NA_integer_
 
             for (level in length(nodePath):lastNotFull) {
                 n <- nodePath[level]
@@ -165,13 +165,13 @@ insert.whitney <- function(decomposition, squares) {
                     extendedNode <- append(decomposition@nodes[n,], hold, i)
                     extendedChildren <- append(decomposition@children[n,], holdChild, i+1)
 
-                    decomposition@nodes[n,] <- c(extendedNode[1:(medium-1)], rep(0, order-medium))
-                    decomposition@children[n,] <- c(extendedChildren[1:medium], rep(0, order-medium))
+                    decomposition@nodes[n,] <- c(extendedNode[1:(medium-1)], rep(NA_integer_, order-medium))
+                    decomposition@children[n,] <- c(extendedChildren[1:medium], rep(NA_integer_, order-medium))
 
                     newNode <- extendedNode[(medium+1):order]
-                    newNode <- c(newNode, rep(0, medium - 1))
+                    newNode <- c(newNode, rep(NA_integer_, medium - 1))
                     newChildren <- extendedChildren[(medium+1):(order+1)]
-                    newChildren <- c(newChildren, rep(0, medium - 1))
+                    newChildren <- c(newChildren, rep(NA_integer_, medium - 1))
 
                     decomposition@nodes <- rbind(decomposition@nodes, newNode)
                     decomposition@children <- rbind(decomposition@children, newChildren)
@@ -179,8 +179,8 @@ insert.whitney <- function(decomposition, squares) {
                     hold <- extendedNode[medium]
                     holdChild <- nrow(decomposition@nodes)
                 } else if (level == 0) {
-                    newNode <- c(hold, rep(0, order - 2))
-                    newChildren <- c(decomposition@root, holdChild, rep(0, order - 2))
+                    newNode <- c(hold, rep(NA_integer_, order - 2))
+                    newChildren <- c(decomposition@root, holdChild, rep(NA_integer_, order - 2))
 
                     decomposition@nodes <- rbind(decomposition@nodes, newNode)
                     decomposition@children <- rbind(decomposition@children, newChildren)
@@ -253,11 +253,11 @@ search.whiteney <- function(decomposition, x, y) {
         searching <- TRUE
         while (searching) {
             if (n == 0) {
-                result <- append(result, whitneySquare(NaN, NaN, NaN))
+                result <- append(result, whitneySquare(NA_integer_, NA_integer_, NA_integer_))
             }
 
             nodes <- decomposition@nodes[n, ]
-            count <- sum(nodes != 0)
+            count <- sum(!is.na(nodes))
             notFound <- TRUE
 
             for (j in seq_len(count)) {
