@@ -245,6 +245,50 @@ rect.whitney <- function(decomposition, x, y) {
     points(x, y, col = "red")
 }
 
+search.whiteney <- function(decomposition, x, y) {
+    result <- whitneySquare()
+
+    for (i in seq_len(length(x))) {
+        n <- decomposition@root
+        searching <- TRUE
+        while (searching) {
+            if (n == 0) {
+                result <- append(result, whitneySquare(NaN, NaN, NaN))
+            }
+
+            nodes <- decomposition@nodes[n, ]
+            count <- sum(nodes != 0)
+            notFound <- TRUE
+
+            for (j in seq_len(count)) {
+                square <- decomposition@squares[nodes[j]]
+                if (y[i] < square@y) {
+                    n <- decomposition@children[n, j]
+                    notFound <- FALSE
+                    break
+                } else if (y[i] < square@y + square@w) {
+                    if (x[i] < square@x) {
+                        n <- decomposition@children[n, j]
+                        notFound <- FALSE
+                        break
+                    } else if (x[i] < square@x + square@w) {
+                        result <- append(result, square)
+                        notFound <- FALSE
+                        searching <- FALSE
+                        break
+                    }
+                }
+            }
+
+            if (notFound) {
+                n <- decomposition@children[n, count+1]
+            }
+        }
+    }
+
+    return(result)
+}
+
 x <- c(0.2,0.2,0.4,0.3)
 y <- c(0.3,0.1,0.5,0.9)
 
