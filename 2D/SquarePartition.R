@@ -234,7 +234,7 @@ search.whitney <- function(decomposition, x, y) {
         n <- decomposition@root
         searching <- TRUE
         while (searching) {
-            if (n == 0) {
+            if (is.na(n)) {
                 result <- append(result, whitneySquare(NA_integer_, NA_integer_, NA_integer_))
             }
 
