@@ -65,10 +65,10 @@ setMethod("<", signature(e1 = "whitneySquare", e2 = "whitneySquare"), function(e
 })
 
 bisect.whitney <- function(square) {
-    square@w <- c(square@w %*% t(c(1,1,1,1)/2))
+    square@w <- c(c(0.5,0.5,0.5,0.5) %*% t(square@w))
 
-    square@x <- c(square@x %*% t(c(1,1,1,1))) + square@w * c(0,1,0,1)
-    square@y <- c(square@y %*% t(c(1,1,1,1))) + square@w * c(0,0,1,1)
+    square@x <- c(c(1,1,1,1) %*% t(square@x)) + square@w * c(0,1,0,1)
+    square@y <- c(c(1,1,1,1) %*% t(square@y)) + square@w * c(0,0,1,1)
 
     return(square)
 }
