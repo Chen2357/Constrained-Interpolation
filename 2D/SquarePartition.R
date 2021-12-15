@@ -201,35 +201,17 @@ insert.whitney <- function(decomposition, squares) {
 }
 
 partition.whitney <- function(x, y) {
-    result <- insert.whitney(whitneyDecomposition(), whitneySquare(0,0,1))
+    squares <- whitneySquare()
+    queue <- whitneySquare(0,0,1)
 
-    q <- 1
-    queue <- c(1)
+    while (length(queue) > 0) {
+        ok <- rowSums(outer(queue@x - queue@w, x, `<=`) & outer(queue@x + 2 * queue@w, x, `>`) & outer(queue@y - queue@w, y, `<=`) & outer(queue@y + 2 * queue@w, y, `>`)) <= 1
 
-    while (q <= length(queue)) {
-        # if (q > 65536) {
-        #     print("Exceeds limit")
-        #     break
-        # }
-        i <- queue[q]
-
-        squarex <- result@squares@x[i]
-        squarey <- result@squares@y[i]
-        squarew <- result@squares@w[i]
-
-        count <- sum((squarex - squarew <= x & x < squarex + 2 * squarew) & (squarey - squarew <= y & y < squarey + 2 * squarew))
-
-        if (count > 1) {
-            bisection <- bisect.whitney(result@squares[i])
-            result@squares[i] <- bisection[1]
-
-            result <- insert.whitney(result, bisection[2:4])
-            queue <- c(queue, i, (length(result@squares)-2):length(result@squares))
-        }
-        q <- q + 1
+        squares <- append(squares, queue[ok])
+        queue <- bisect.whitney(queue[!ok])
     }
 
-    return(result)
+    return(insert.whitney(whitneyDecomposition(), squares))
 }
 
 rect.whitney <- function(decomposition, x, y) {
