@@ -1,3 +1,8 @@
+# A whitneySquare instance represents a collection of squares in a plane
+# 
+# `x` is a vector of the x-coordinates of the lower left corners of the squares.
+# `y` is a vector of the y-coordinates of the lower left corners of the squares.
+# `w` is a vector of the width of the squares.
 whitneySquare <- setClass("whitneySquare",
     slots = c(
         x = "numeric",
@@ -40,6 +45,8 @@ setMethod("[<-", "whitneySquare", function(x,i,...,value) {
     return(x)
 })
 
+# A comparison function is set on the whitneySquare.
+# They are first compared by the `y` slot, and then the `x` slot.
 setMethod(">", signature(e1 = "whitneySquare", e2 = "whitneySquare"), function(e1, e2) {
     result <- rep(FALSE, max(length(e1), length(e2)))
 
@@ -64,6 +71,9 @@ setMethod("<", signature(e1 = "whitneySquare", e2 = "whitneySquare"), function(e
     return(result)
 })
 
+# `bisect.whitney` partitions each of the squares in the whitneySquare instance into four equal sized whitneySquare.
+# The partition happens in-place, meaning the four squares resulted from one parent square will have adjacent index.
+# It returns another whitneySquare instance with four times the number of squares.
 bisect.whitney <- function(square) {
     square@w <- c(c(0.5,0.5,0.5,0.5) %*% t(square@w))
 
@@ -73,6 +83,13 @@ bisect.whitney <- function(square) {
     return(square)
 }
 
+# A whitneyDecomposition instance stores a whitneySquare instance along with a B-tree structure to allow fast searching.
+# 
+# `squares` is a whitneySquare instance that stores a collection of squares.
+# `order` is the order of the B-tree. It should not be modified after initialization. (it is 5 by default)
+# `root` is the index of the root note of the B-tree.
+# `nodes` stores the information about each node of the B-tree. It is a matrix whose element nodes[x,y] is the y-th key (index of a square in `squares`) in the x-th node of the B-tree. Missing keys are represented by NA_integer_.
+# `children` stores the information about the children of each node of the B-tree. It is a mtrix whose element children[x,y] is the y-th child of the x-th node of the B-tree. Missing children are represented by NA_integer_.
 whitneyDecomposition <- setClass("whitneyDecomposition",
     slots = c(
         squares = "whitneySquare",
@@ -109,6 +126,7 @@ setMethod("initialize", "whitneyDecomposition",
     }
 )
 
+# `insert.whitney` is a B-tree insertion algorithm that allows the adding of a collection of square represented by a whitneySquare instance into a whitneyDecomposition instance.
 insert.whitney <- function(decomposition, squares) {
     lastIndex <- length(decomposition@squares)
     decomposition@squares <- append(decomposition@squares, squares)
@@ -116,9 +134,13 @@ insert.whitney <- function(decomposition, squares) {
     order <- decomposition@order
 
     for (squareIndex in seq_along(squares)) {
+        # `n` is the index of the node currently being searched.
         n <- decomposition@root
+        # `key` is the index of the newly added square in `decomposition@squares`
         key <- lastIndex + squareIndex
 
+        # `is.na(n)` is true when `decomposition` is empty with no squares.
+        # in this case, we add the key of the square into a new node, and make it the root node.
         if (is.na(n)) {
             decomposition@nodes <- rbind(decomposition@nodes, c(key, rep(NA_integer_, order - 2)))
             decomposition@children <- rbind(decomposition@children, rep(NA_integer_, order))
@@ -126,14 +148,19 @@ insert.whitney <- function(decomposition, squares) {
             next
         }
 
+        # `nodePath` is a vector of the index of the nodes being searched.
         nodePath <- c()
+        # `insertPath` is a vector of the index of the child node being searched.
         insertPath <- c()
-
+        # `lastNotFull` is the last level being searched with missing element, the root node is on level 1.
         lastNotFull <- 0
 
         while (TRUE) {
+            # `s` is a vector of the keys in node `n`
             s <- decomposition@nodes[n,]
+            # `i` is the index of the child of node `n` that will be searched. (the index starts from 0)
             i <- sum(decomposition@squares[s[!is.na(s)]] < squares[squareIndex], na.rm=TRUE)
+            # `notFull` is whether node `n` has missing element (which can potentially offer a place to store additional keys)
             notFull <- any(is.na(s))
 
             nodePath <- c(nodePath, n)
@@ -141,30 +168,41 @@ insert.whitney <- function(decomposition, squares) {
             
             if (notFull) lastNotFull <- length(nodePath)
             
+            # `is.na(decomposition@children[n,1])` is true when we are on the leaf node.
             if (is.na(decomposition@children[n,1])) {
                 if (notFull) {
+                    # if the leaf node is not full, we simply add the key to the missing slot.
                     decomposition@nodes[n,] <- append(s[1:(order-2)], key, i)
+                    # `lastNotFull` is set to `NULL` to indicate that we don't need to do further action.
                     lastNotFull <- NULL
                 }
                 break
             } else {
+                # if we are not on the left node, set the child node as the next node being searched.
                 n <- decomposition@children[n,i+1]
             }
         }
 
+        # `!is.null(lastNotFull)` is true when the leaf node is full, in which case, we need to take further actions.
         if (!is.null(lastNotFull)) {
             medium <- ceiling(order/2)
+            # `hold` is the key that we are passing up the B-tree
             hold <- key
+            # `holdChild` is the index of the right child after we split a node
             holdChild <- NA_integer_
 
+            # `level` runs a backward loop from leaf level to the last level that is not full.
             for (level in length(nodePath):lastNotFull) {
                 n <- nodePath[level]
                 i <- insertPath[level]
 
                 if (level != lastNotFull) {
+                    # if we are not on the last level that is not full (meaning that node `n` is full), then we make an extended node (and its children) by inserting `hold` and `holdChild` into the insertion index we came from.
                     extendedNode <- append(decomposition@nodes[n,], hold, i)
                     extendedChildren <- append(decomposition@children[n,], holdChild, i+1)
 
+                    # we split node `n` by replacing node `n` with the its first half, and create a new node from the second half. 
+                    # we also hold on to the medium element that does not belong to either half, passing it up the B-tree.
                     decomposition@nodes[n,] <- c(extendedNode[1:(medium-1)], rep(NA_integer_, order-medium))
                     decomposition@children[n,] <- c(extendedChildren[1:medium], rep(NA_integer_, order-medium))
 
@@ -179,6 +217,7 @@ insert.whitney <- function(decomposition, squares) {
                     hold <- extendedNode[medium]
                     holdChild <- nrow(decomposition@nodes)
                 } else if (level == 0) {
+                    # if we passed the root node (root node is on level 1), then we have to create a new node with what we are holding, and set it as the new root node.
                     newNode <- c(hold, rep(NA_integer_, order - 2))
                     newChildren <- c(decomposition@root, holdChild, rep(NA_integer_, order - 2))
 
@@ -187,6 +226,7 @@ insert.whitney <- function(decomposition, squares) {
 
                     decomposition@root <- nrow(decomposition@nodes)
                 } else {
+                    # if we reached the last node that is not full, then we simply add what we are holding to the next missing slot in the node.
                     decomposition@nodes[n,] <- append(decomposition@nodes[n,-(order-1)], hold, i)
                     decomposition@children[n,] <- append(decomposition@children[n,-order], holdChild, i+1)
                 }
@@ -200,6 +240,7 @@ insert.whitney <- function(decomposition, squares) {
     return(decomposition)
 }
 
+# `partition.whitney` is a B-tree insertion algorithm that allows the adding of a collection of square represented by a whitneySquare instance into a whitneyDecomposition instance.
 partition.whitney <- function(x, y) {
     squares <- whitneySquare()
     queue <- whitneySquare(0,0,1)
@@ -214,6 +255,7 @@ partition.whitney <- function(x, y) {
     return(insert.whitney(whitneyDecomposition(), squares))
 }
 
+# `rect.whitney` plots the a whitneyDecomposition instance, and indicates whether the each square contains a point.
 rect.whitney <- function(decomposition, x, y) {
     for (i in seq_along(decomposition@squares)) {
         square <- decomposition@squares[i]
@@ -227,6 +269,7 @@ rect.whitney <- function(decomposition, x, y) {
     points(x, y, col = "red")
 }
 
+# `search.whitney` is a B-tree search algorithm that finds the squares that contain each of the points.
 search.whitney <- function(decomposition, x, y) {
     result <- whitneySquare()
 
@@ -235,25 +278,32 @@ search.whitney <- function(decomposition, x, y) {
         searching <- TRUE
         while (searching) {
             if (is.na(n)) {
+                # the point is not in any of the squares
                 result <- append(result, whitneySquare(NA_integer_, NA_integer_, NA_integer_))
             }
 
+            # the keys in the nodes
             nodes <- decomposition@nodes[n, ]
+            # the number of keys in the node
             count <- sum(!is.na(nodes))
+            # whether the point is found to be inside of a square in this node or whether the point is expected to be in one of the child node
             notFound <- TRUE
 
             for (j in seq_len(count)) {
                 square <- decomposition@squares[nodes[j]]
                 if (y[i] < square@y) {
+                    # the point belongs to a square that is before the j-th square, so we search the j-th child
                     n <- decomposition@children[n, j]
                     notFound <- FALSE
                     break
                 } else if (y[i] < square@y + square@w) {
                     if (x[i] < square@x) {
+                        # the point belongs to a square that is before the j-th square, so we search the j-th child
                         n <- decomposition@children[n, j]
                         notFound <- FALSE
                         break
                     } else if (x[i] < square@x + square@w) {
+                        # we have found that the point is inside this square.
                         result <- append(result, square)
                         notFound <- FALSE
                         searching <- FALSE
@@ -263,6 +313,7 @@ search.whitney <- function(decomposition, x, y) {
             }
 
             if (notFound) {
+                # the point belongs to a square that is greater than any of the squares in this node, so we search the rightmost child
                 n <- decomposition@children[n, count+1]
             }
         }
