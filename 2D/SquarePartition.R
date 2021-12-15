@@ -115,7 +115,7 @@ insert.whitney <- function(decomposition, squares) {
 
     order <- decomposition@order
 
-    for (squareIndex in seq_len(length(squares))) {
+    for (squareIndex in seq_along(squares)) {
         n <- decomposition@root
         key <- lastIndex + squareIndex
 
@@ -233,7 +233,7 @@ partition.whitney <- function(x, y) {
 }
 
 rect.whitney <- function(decomposition, x, y) {
-    for (i in seq_len(length(decomposition@squares))) {
+    for (i in seq_along(decomposition@squares)) {
         square <- decomposition@squares[i]
 
         hasPoint <- any((square@x <= x & x < square@x + square@w) & (square@y <= y & y < square@y + square@w))
@@ -248,7 +248,7 @@ rect.whitney <- function(decomposition, x, y) {
 search.whitney <- function(decomposition, x, y) {
     result <- whitneySquare()
 
-    for (i in seq_len(length(x))) {
+    for (i in seq_along(x)) {
         n <- decomposition@root
         searching <- TRUE
         while (searching) {
