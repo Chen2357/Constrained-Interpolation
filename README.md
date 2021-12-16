@@ -1,5 +1,5 @@
 # Constrained-Interpolation
-A 2021 summer research project
+A 2021 Summer to present research project
 
 # Major Advancements
 - [ ] Documentation.
