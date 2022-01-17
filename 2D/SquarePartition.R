@@ -1,10 +1,19 @@
+source("2D/WhitneyField.R")
 source("2D/WhitneySquare.R")
 source("2D/WhitneyDecomposition.R")
 
 x <- c(0.2,0.2,0.4,0.3)
 y <- c(0.3,0.1,0.5,0.9)
+coef <- matrix(c(
+    1,0,0,
+    2,0,0,
+    3,0,0,
+    4,0,0
+), byrow = TRUE, ncol = 3)
 
-W <- partition.whitney(x, y)
+field <- whitneyField(x, y, coef)
+
+W <- partition.whitney(field)
 
 plot(c(0,1), c(0,1), type = "n")
 rect.whitney(W, x, y)

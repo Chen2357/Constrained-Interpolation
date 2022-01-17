@@ -169,12 +169,32 @@ insert.whitney <- function(decomposition, squares) {
 }
 
 # `partition.whitney` is a B-tree insertion algorithm that allows the adding of a collection of square represented by a whitneySquare instance into a whitneyDecomposition instance.
-partition.whitney <- function(x, y) {
+partition.whitney <- function(field) {
     squares <- whitneySquare()
     queue <- whitneySquare(0,0,1)
 
+    default_field <- matrix(field@coef[1,], ncol = 3)
+
+    x <- field@x
+    y <- field@y
+
     while (length(queue) > 0) {
-        ok <- rowSums(outer(queue@x - queue@w, x, `<=`) & outer(queue@x + 2 * queue@w, x, `>`) & outer(queue@y - queue@w, y, `<=`) & outer(queue@y + 2 * queue@w, y, `>`)) <= 1
+        # This part need to be modified for readability
+        contain_matrix <- outer(queue@x - queue@w, field@x, `<=`) & outer(queue@x + 2 * queue@w, field@x, `>`) & outer(queue@y - queue@w, field@y, `<=`) & outer(queue@y + 2 * queue@w, field@y, `>`)
+
+        contain_indices <- apply(contain_matrix, 1, function(x) which(x)[1])
+
+        contain_count <- rowSums(contain_matrix)
+        contain_zero <- contain_count == 0
+        contain_one <- contain_count == 1
+
+        ok <- contain_one | contain_zero
+
+        queue@field[contain_zero,] <- default_field[(contain_zero-1) %/% 4 + 1, ]
+
+        queue@field[contain_one,] <- field@coef[contain_indices[contain_one],]
+
+        default_field <- matrix(field@coef[contain_indices[!ok],], ncol = 3)
 
         squares <- append(squares, queue[ok])
         queue <- bisect.whitney(queue[!ok])
