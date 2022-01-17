@@ -99,10 +99,10 @@ whitneyDecomposition <- setClass("whitneyDecomposition",
         children = "matrix"
     )
 )
+
 # setValidity("whitneyDecomposition", function(object) {
 #     rownames(object@nodes) <- NULL
 #     rownames(object@children) <- NULL
-
 #     if (any(object@nodes[,1]==0)) {
 #         print("Found error 1")
 #         print(object)
