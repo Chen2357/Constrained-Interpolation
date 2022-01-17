@@ -1,5 +1,5 @@
-source("WhitneySquare.R")
-source("WhitneyDecomposition.R")
+source("2D/WhitneySquare.R")
+source("2D/WhitneyDecomposition.R")
 
 x <- c(0.2,0.2,0.4,0.3)
 y <- c(0.3,0.1,0.5,0.9)
