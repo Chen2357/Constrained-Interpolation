@@ -31,6 +31,11 @@ setMethod("initialize", "whitneySquare",
         .Object@x <- x
         .Object@y <- y
         .Object@w <- w
+
+        if (!is.matrix(field)) {
+            field <- matrix(field, nrow=length(x), ncol=3)
+        }
+
         .Object@field <- field
 
         validObject(.Object)
@@ -57,12 +62,12 @@ setMethod("[<-", "whitneySquare", function(x,i,...,value) {
 # The partition happens in-place, meaning the four squares resulted from one parent square will have adjacent index.
 # It returns another whitneySquare instance with four times the number of squares.
 bisect.whitney <- function(square) {
+    square@field <- square@field[rep(seq_len(length(square)), each = 4), ]
+
     square@w <- c(c(0.5,0.5,0.5,0.5) %*% t(square@w))
 
     square@x <- c(c(1,1,1,1) %*% t(square@x)) + square@w * c(0,1,0,1)
     square@y <- c(c(1,1,1,1) %*% t(square@y)) + square@w * c(0,0,1,1)
-
-    square@field <- square@field[rep(seq_len(square), each = 2), ]
 
     return(square)
 }
