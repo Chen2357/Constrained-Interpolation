@@ -7,12 +7,12 @@ whitneyField <- setClass(
     )
 )
 
-setValidity("whitneySquare", function(object) {
+setValidity("whitneyField", function(object) {
     if (length(object@x) != length(object@y)) {
         return("Numbers of x and y data are mismatched")
-    } else if (ncol(object@field) != 3) {
+    } else if (ncol(object@coef) != 3) {
         return("Number of columns of coef must be 3")
-    } else if (nrow(object@field) != length(object@x)) {
+    } else if (nrow(object@coef) != length(object@x)) {
         return("Number of x data and number of columns of coef mismatched")
     }
     return(TRUE)
