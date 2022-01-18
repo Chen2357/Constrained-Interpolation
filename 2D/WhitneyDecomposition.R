@@ -173,8 +173,6 @@ partition.whitney <- function(field) {
     squares <- whitneySquare()
     queue <- whitneySquare(0,0,1)
 
-    default_field <- matrix(field@coef[1,], ncol = 3)
-
     x <- field@x
     y <- field@y
 
@@ -190,11 +188,9 @@ partition.whitney <- function(field) {
 
         ok <- contain_one | contain_zero
 
-        queue@field[contain_zero,] <- default_field[(contain_zero-1) %/% 4 + 1, ]
-
         queue@field[contain_one,] <- field@coef[contain_indices[contain_one],]
 
-        default_field <- matrix(field@coef[contain_indices[!ok],], ncol = 3)
+        queue@field[!ok,] <- matrix(field@coef[contain_indices[!ok],], ncol = 3)
 
         squares <- append(squares, queue[ok])
         queue <- bisect.whitney(queue[!ok])
