@@ -213,11 +213,25 @@ rect.whitney <- function(decomposition, x, y) {
     points(x, y, col = "red")
 }
 
+# FIXME - When a point is to the left of a square, it is not clear whether the point is in a square greater than less than
 # `search.whitney` is a B-tree search algorithm that finds the squares that contain each of the points.
-search.whitney <- function(decomposition, x, y) {
+search.whitney <- function(decomposition, x, y, na.rm = FALSE) {
     result <- whitneySquare()
 
+    squares <- W@squares
     for (i in seq_along(x)) {
+
+        # FIXME - temporary O(n) algorithm
+        contain <- (squares@x <= x[i] & x[i] < squares@x + squares@w) & (squares@y <= y[i] & y[i] < squares@y + squares@w)
+        n <- which(contain)[1]
+        if (is.na(n)) {
+            if (!na.rm) result <- append(result, whitneySquare(NA_integer_, NA_integer_, NA_integer_))
+        }
+        else {
+            result <- append(result, squares[n])
+        }
+        next
+
         n <- decomposition@root
         searching <- TRUE
         while (searching) {
