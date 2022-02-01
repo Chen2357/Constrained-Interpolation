@@ -1,3 +1,5 @@
+# THIS FILE IS NOW OBSOLETE
+
 # A comparison function is set on the whitneySquare.
 # They are first compared by the `y` slot, and then the `x` slot.
 setMethod(">", signature(e1 = "whitneySquare", e2 = "whitneySquare"), function(e1, e2) {
@@ -169,7 +171,7 @@ insert.whitney <- function(decomposition, squares) {
 }
 
 # `partition.whitney` is a B-tree insertion algorithm that allows the adding of a collection of square represented by a whitneySquare instance into a whitneyDecomposition instance.
-partition.whitney <- function(field) {
+partition._whitney <- function(field) {
     squares <- whitneySquare()
     queue <- whitneySquare(0,0,1)
 
@@ -200,7 +202,7 @@ partition.whitney <- function(field) {
 }
 
 # `rect.whitney` plots the a whitneyDecomposition instance, and indicates whether the each square contains a point.
-rect.whitney <- function(decomposition, x, y) {
+rect._whitney <- function(decomposition, x, y) {
     for (i in seq_along(decomposition@squares)) {
         square <- decomposition@squares[i]
 
@@ -208,6 +210,9 @@ rect.whitney <- function(decomposition, x, y) {
         col <- ifelse(hasPoint, "pink", "lightgreen")
 
         rect(square@x, square@y, square@x + square@w, square@y + square@w, col = col)
+
+        # TODO - omit this
+        text(square@x + square@w/2, square@y + square@w/2, labels = square@field[1,1])
     }
 
     points(x, y, col = "red")
@@ -215,7 +220,7 @@ rect.whitney <- function(decomposition, x, y) {
 
 # FIXME - When a point is to the left of a square, it is not clear whether the point is in a square greater than less than
 # `search.whitney` is a B-tree search algorithm that finds the squares that contain each of the points.
-search.whitney <- function(decomposition, x, y, na.rm = FALSE) {
+search._whitney <- function(decomposition, x, y, na.rm = FALSE) {
     result <- whitneySquare()
 
     squares <- W@squares
@@ -237,7 +242,9 @@ search.whitney <- function(decomposition, x, y, na.rm = FALSE) {
         while (searching) {
             if (is.na(n)) {
                 # the point is not in any of the squares
-                result <- append(result, whitneySquare(NA_integer_, NA_integer_, NA_integer_))
+                if (!na.rm) result <- append(result, whitneySquare(NA_integer_, NA_integer_, NA_integer_))
+                searching <- FALSE
+                next
             }
 
             # the keys in the nodes

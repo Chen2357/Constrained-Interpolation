@@ -58,6 +58,10 @@ setMethod("[<-", "whitneySquare", function(x,i,...,value) {
     return(x)
 })
 
+setMethod("is.na", signature(x = "whitneySquare"), function(x) {
+    return(is.na(x@x) | is.na(x@y) | is.na(x@w))
+})
+
 # `bisect.whitney` partitions each of the squares in the whitneySquare instance into four equal sized whitneySquare.
 # The partition happens in-place, meaning the four squares resulted from one parent square will have adjacent index.
 # It returns another whitneySquare instance with four times the number of squares.
@@ -70,4 +74,62 @@ bisect.whitney <- function(square) {
     square@y <- c(c(1,1,1,1) %*% t(square@y)) + square@w * c(0,0,1,1)
 
     return(square)
+}
+
+search.whitney <- function(squares, x, y, na.rm = FALSE) {
+    result <- whitneySquare()
+    for (i in seq_along(x)) {
+        contain <- (squares@x <= x[i] & x[i] < squares@x + squares@w) & (squares@y <= y[i] & y[i] < squares@y + squares@w)
+        n <- which(contain)[1]
+        if (is.na(n)) {
+            if (!na.rm) result <- append(result, whitneySquare(NA_integer_, NA_integer_, NA_integer_))
+        }
+        else {
+            result <- append(result, squares[n])
+        }
+    }
+    return(result)
+}
+
+partition.whitney <- function(field) {
+    squares <- whitneySquare()
+    queue <- whitneySquare(0,0,1)
+
+    x <- field@x
+    y <- field@y
+
+    while (length(queue) > 0) {
+        # TODO This part need to be modified for readability
+        contain_matrix <- outer(queue@x - queue@w, field@x, `<=`) & outer(queue@x + 2 * queue@w, field@x, `>`) & outer(queue@y - queue@w, field@y, `<=`) & outer(queue@y + 2 * queue@w, field@y, `>`)
+
+        contain_indices <- apply(contain_matrix, 1, function(x) which(x)[1])
+
+        contain_count <- rowSums(contain_matrix)
+        contain_zero <- contain_count == 0
+        contain_one <- contain_count == 1
+
+        ok <- contain_one | contain_zero
+
+        queue@field[contain_one,] <- field@coef[contain_indices[contain_one],]
+
+        queue@field[!ok,] <- matrix(field@coef[contain_indices[!ok],], ncol = 3)
+
+        squares <- append(squares, queue[ok])
+        queue <- bisect.whitney(queue[!ok])
+    }
+
+    return(squares)
+}
+
+rect.whitney <- function(squares, x, y) {
+    for (i in seq_along(squares)) {
+        square <- squares[i]
+
+        hasPoint <- any((square@x <= x & x < square@x + square@w) & (square@y <= y & y < square@y + square@w))
+        col <- ifelse(hasPoint, "pink", "lightgreen")
+
+        rect(square@x, square@y, square@x + square@w, square@y + square@w, col = col)
+    }
+
+    points(x, y, col = "red")
 }
