@@ -129,6 +129,8 @@ rect.whitney <- function(squares, x, y) {
         col <- ifelse(hasPoint, "pink", "lightgreen")
 
         rect(square@x, square@y, square@x + square@w, square@y + square@w, col = col)
+
+        text(square@x + square@w/2, square@y + square@w/2, labels = square@field[1,1])
     }
 
     points(x, y, col = "red")
