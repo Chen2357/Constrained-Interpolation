@@ -2,6 +2,7 @@ library(plotly)
 
 source("2D/WhitneyField.R")
 source("2D/WhitneySquare.R")
+source("2D/QuadTree.R")
 source("2D/Support.R")
 
 x <- c(0.2,0.2,0.4,0.3)
@@ -15,7 +16,7 @@ coef <- matrix(c(
 
 field <- whitneyField(x, y, coef)
 
-W <- partition.whitney(field)
+W <- partition.quadtree(field)
 
 # Plotting
 x_res <- 50
@@ -27,7 +28,7 @@ for (i in seq_len(x_res)) {
     for (j in seq_len(y_res)) {
         checkpoint <- c(1.2 * (i-1) / (x_res-1) - 0.1, 1.2 * (j-1) / (y_res-1) - 0.1)
 
-        support <- searchSupport.whitney(W, checkpoint[1], checkpoint[2])
+        support <- searchSupport.whitney(leaves.quadtree(W), checkpoint[1], checkpoint[2])
         value[j, i] <- patch.whitney(support, checkpoint[1], checkpoint[2])
     }
 }
