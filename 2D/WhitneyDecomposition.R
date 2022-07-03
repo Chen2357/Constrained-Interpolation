@@ -1,49 +1,4 @@
-# A whitneySquare instance represents a collection of squares in a plane
-# 
-# `x` is a vector of the x-coordinates of the lower left corners of the squares.
-# `y` is a vector of the y-coordinates of the lower left corners of the squares.
-# `w` is a vector of the width of the squares.
-whitneySquare <- setClass("whitneySquare",
-    slots = c(
-        x = "numeric",
-        y = "numeric",
-        w = "numeric"
-    )
-)
-
-setValidity("whitneySquare", function(object) {
-    if (length(object@x) != length(object@y)) {
-        return("Numbers of x and y data are mismatched")
-    } else if (length(object@x) != length(object@w)) {
-        return("Numbers of x and w data are mismatched")
-    }
-    return(TRUE)
-})
-
-setMethod("initialize", "whitneySquare",
-    function(.Object, x = numeric(0), y = numeric(0), w = numeric(0)) {
-        .Object@x <- x
-        .Object@y <- y
-        .Object@w <- w
-
-        validObject(.Object)
-        return(.Object)
-    }
-)
-
-setMethod("length", "whitneySquare", function(x) length(x@x))
-
-setMethod("append", signature(x = "whitneySquare", values = "whitneySquare"), function(x, values, after = length(x)) {
-    return(whitneySquare(append(x@x, values@x, after), append(x@y, values@y, after), append(x@w, values@w, after)))
-})
-
-setMethod("[", "whitneySquare", function(x,i,...) whitneySquare(x@x[i], x@y[i], x@w[i]))
-setMethod("[<-", "whitneySquare", function(x,i,...,value) {
-    x@x[i] <- value@x
-    x@y[i] <- value@y
-    x@w[i] <- value@w
-    return(x)
-})
+# THIS FILE IS NOW OBSOLETE
 
 # A comparison function is set on the whitneySquare.
 # They are first compared by the `y` slot, and then the `x` slot.
@@ -71,25 +26,13 @@ setMethod("<", signature(e1 = "whitneySquare", e2 = "whitneySquare"), function(e
     return(result)
 })
 
-# `bisect.whitney` partitions each of the squares in the whitneySquare instance into four equal sized whitneySquare.
-# The partition happens in-place, meaning the four squares resulted from one parent square will have adjacent index.
-# It returns another whitneySquare instance with four times the number of squares.
-bisect.whitney <- function(square) {
-    square@w <- c(c(0.5,0.5,0.5,0.5) %*% t(square@w))
-
-    square@x <- c(c(1,1,1,1) %*% t(square@x)) + square@w * c(0,1,0,1)
-    square@y <- c(c(1,1,1,1) %*% t(square@y)) + square@w * c(0,0,1,1)
-
-    return(square)
-}
-
 # A whitneyDecomposition instance stores a whitneySquare instance along with a B-tree structure to allow fast searching.
 # 
 # `squares` is a whitneySquare instance that stores a collection of squares.
 # `order` is the order of the B-tree. It should not be modified after initialization. (it is 5 by default)
 # `root` is the index of the root note of the B-tree.
 # `nodes` stores the information about each node of the B-tree. It is a matrix whose element nodes[x,y] is the y-th key (index of a square in `squares`) in the x-th node of the B-tree. Missing keys are represented by NA_integer_.
-# `children` stores the information about the children of each node of the B-tree. It is a mtrix whose element children[x,y] is the y-th child of the x-th node of the B-tree. Missing children are represented by NA_integer_.
+# `children` stores the information about the children of each node of the B-tree. It is a matrix whose element children[x,y] is the y-th child of the x-th node of the B-tree. Missing children are represented by NA_integer_.
 whitneyDecomposition <- setClass("whitneyDecomposition",
     slots = c(
         squares = "whitneySquare",
@@ -99,19 +42,6 @@ whitneyDecomposition <- setClass("whitneyDecomposition",
         children = "matrix"
     )
 )
-
-# setValidity("whitneyDecomposition", function(object) {
-#     rownames(object@nodes) <- NULL
-#     rownames(object@children) <- NULL
-#     if (any(object@nodes[,1]==0)) {
-#         print("Found error 1")
-#         print(object)
-#         return("Error 1")
-#     }
-#     print("Validity passed")
-#     print(object)
-#     return(TRUE)
-# })
 
 setMethod("initialize", "whitneyDecomposition",
     function(.Object) {
@@ -241,12 +171,28 @@ insert.whitney <- function(decomposition, squares) {
 }
 
 # `partition.whitney` is a B-tree insertion algorithm that allows the adding of a collection of square represented by a whitneySquare instance into a whitneyDecomposition instance.
-partition.whitney <- function(x, y) {
+partition._whitney <- function(field) {
     squares <- whitneySquare()
     queue <- whitneySquare(0,0,1)
 
+    x <- field@x
+    y <- field@y
+
     while (length(queue) > 0) {
-        ok <- rowSums(outer(queue@x - queue@w, x, `<=`) & outer(queue@x + 2 * queue@w, x, `>`) & outer(queue@y - queue@w, y, `<=`) & outer(queue@y + 2 * queue@w, y, `>`)) <= 1
+        # This part need to be modified for readability
+        contain_matrix <- outer(queue@x - queue@w, field@x, `<=`) & outer(queue@x + 2 * queue@w, field@x, `>`) & outer(queue@y - queue@w, field@y, `<=`) & outer(queue@y + 2 * queue@w, field@y, `>`)
+
+        contain_indices <- apply(contain_matrix, 1, function(x) which(x)[1])
+
+        contain_count <- rowSums(contain_matrix)
+        contain_zero <- contain_count == 0
+        contain_one <- contain_count == 1
+
+        ok <- contain_one | contain_zero
+
+        queue@field[contain_one,] <- field@coef[contain_indices[contain_one],]
+
+        queue@field[!ok,] <- matrix(field@coef[contain_indices[!ok],], ncol = 3)
 
         squares <- append(squares, queue[ok])
         queue <- bisect.whitney(queue[!ok])
@@ -256,7 +202,7 @@ partition.whitney <- function(x, y) {
 }
 
 # `rect.whitney` plots the a whitneyDecomposition instance, and indicates whether the each square contains a point.
-rect.whitney <- function(decomposition, x, y) {
+rect._whitney <- function(decomposition, x, y) {
     for (i in seq_along(decomposition@squares)) {
         square <- decomposition@squares[i]
 
@@ -264,22 +210,41 @@ rect.whitney <- function(decomposition, x, y) {
         col <- ifelse(hasPoint, "pink", "lightgreen")
 
         rect(square@x, square@y, square@x + square@w, square@y + square@w, col = col)
+
+        # TODO - omit this
+        text(square@x + square@w/2, square@y + square@w/2, labels = square@field[1,1])
     }
 
     points(x, y, col = "red")
 }
 
+# FIXME - When a point is to the left of a square, it is not clear whether the point is in a square greater than less than
 # `search.whitney` is a B-tree search algorithm that finds the squares that contain each of the points.
-search.whitney <- function(decomposition, x, y) {
+search._whitney <- function(decomposition, x, y, na.rm = FALSE) {
     result <- whitneySquare()
 
+    squares <- W@squares
     for (i in seq_along(x)) {
+
+        # FIXME - temporary O(n) algorithm
+        contain <- (squares@x <= x[i] & x[i] < squares@x + squares@w) & (squares@y <= y[i] & y[i] < squares@y + squares@w)
+        n <- which(contain)[1]
+        if (is.na(n)) {
+            if (!na.rm) result <- append(result, whitneySquare(NA_integer_, NA_integer_, NA_integer_))
+        }
+        else {
+            result <- append(result, squares[n])
+        }
+        next
+
         n <- decomposition@root
         searching <- TRUE
         while (searching) {
             if (is.na(n)) {
                 # the point is not in any of the squares
-                result <- append(result, whitneySquare(NA_integer_, NA_integer_, NA_integer_))
+                if (!na.rm) result <- append(result, whitneySquare(NA_integer_, NA_integer_, NA_integer_))
+                searching <- FALSE
+                next
             }
 
             # the keys in the nodes
@@ -321,11 +286,3 @@ search.whitney <- function(decomposition, x, y) {
 
     return(result)
 }
-
-x <- c(0.2,0.2,0.4,0.3)
-y <- c(0.3,0.1,0.5,0.9)
-
-W <- partition.whitney(x, y)
-
-plot(c(0,1), c(0,1), type = "n")
-rect.whitney(W, x, y)

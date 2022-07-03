@@ -2,3 +2,4 @@
 .lintr
 
 Test.R
+*.code-workspace
