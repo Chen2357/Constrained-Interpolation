@@ -1,6 +1,7 @@
 source("2D/WhitneyField.R")
 source("2D/WhitneySquare.R")
 # source("2D/WhitneyDecomposition.R")
+source("2D/QuadTree.R")
 source("2D/Support.R")
 
 x <- c(0.2,0.2,0.4,0.3)
@@ -14,10 +15,10 @@ coef <- matrix(c(
 
 field <- whitneyField(x, y, coef)
 
-W <- partition.whitney(field)
+W <- partition.quadtree(field)
 
 plot(c(0,1), c(0,1), type = "n")
-rect.whitney(W, x, y)
+rect.quadtree(W, x, y)
 
 # checkpoint <- c(0.37, 0.45)
 # print(search.whitney(W, checkpoint[1], checkpoint[2]))
@@ -28,7 +29,7 @@ rect.whitney(W, x, y)
 # print(i)
 # View(cbind(W@nodes, W@children))
 
-checkpoint <- c(0.375, 0.4)
-support <- searchSupport.whitney(W, checkpoint[1], checkpoint[2])
+checkpoint <- c(0.4, 0.4)
+support <- searchSupport.whitney(W@squares, checkpoint[1], checkpoint[2])
 print(support)
 print(patch.whitney(support, checkpoint[1], checkpoint[2]))
