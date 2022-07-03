@@ -54,7 +54,7 @@ setMethod("[<-", "whitneySquare", function(x,i,...,value) {
     x@x[i] <- value@x
     x@y[i] <- value@y
     x@w[i] <- value@w
-    x@field[i,] <- value@field[i,]
+    x@field[i,] <- value@field
     return(x)
 })
 
