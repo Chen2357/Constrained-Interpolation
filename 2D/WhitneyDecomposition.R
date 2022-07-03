@@ -32,7 +32,7 @@ setMethod("<", signature(e1 = "whitneySquare", e2 = "whitneySquare"), function(e
 # `order` is the order of the B-tree. It should not be modified after initialization. (it is 5 by default)
 # `root` is the index of the root note of the B-tree.
 # `nodes` stores the information about each node of the B-tree. It is a matrix whose element nodes[x,y] is the y-th key (index of a square in `squares`) in the x-th node of the B-tree. Missing keys are represented by NA_integer_.
-# `children` stores the information about the children of each node of the B-tree. It is a mtrix whose element children[x,y] is the y-th child of the x-th node of the B-tree. Missing children are represented by NA_integer_.
+# `children` stores the information about the children of each node of the B-tree. It is a matrix whose element children[x,y] is the y-th child of the x-th node of the B-tree. Missing children are represented by NA_integer_.
 whitneyDecomposition <- setClass("whitneyDecomposition",
     slots = c(
         squares = "whitneySquare",
