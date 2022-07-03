@@ -25,6 +25,7 @@ for pair in wspairs:
     if len(pair[0].points) > 1 or len(pair[1].points) > 1:
         nonTrivialPairs.append(pair)
 
+# Need Pseudocode
 @interact(i=(0, max(len(nonTrivialPairs)-1, 0)), j=(0, max(len(wspairs)-1,0)))
 def checkPairs(i, j):
     fig, ax = plt.subplots(1)
@@ -51,3 +52,4 @@ def checkPairs(i, j):
     plt.xlim(0,1)
     plt.ylim(0,1)
     plt.show()
+    
