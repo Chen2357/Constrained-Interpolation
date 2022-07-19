@@ -14,7 +14,10 @@ coordinates = np.concatenate(
     ), axis=0
 )
 
-root = wit.Hypercube([0, 0], 1, coordinates)
+trivial_coordinates = np.array([[0.2,0.2], [0.4,0.4], [0.9,0.9]])
+
+
+root = wit.Hypercube([0, 0], 1, trivial_coordinates)
 root.quadDecompose()
 root.compress()
 

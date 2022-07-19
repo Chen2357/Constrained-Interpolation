@@ -1,1 +1,1 @@
-from Hypercube import *
+from .Hypercube import *
