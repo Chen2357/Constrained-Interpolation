@@ -5,7 +5,7 @@ parent = os.path.dirname(current)
 sys.path.append(parent)
 
 import whitney as wit
-import whitney.Debug as wtd
+from Debug import *
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -13,13 +13,7 @@ from matplotlib.collections import PatchCollection
 from matplotlib.patches import Rectangle
 from ipywidgets import interact
 
-coordinates = np.concatenate(
-    (
-        np.random.rand(10,2) * 0.1 + 0.1,
-        np.random.rand(10,2) * 0.1 + 0.9,
-        np.random.rand(10,2) * 0.1 + np.array([0.1, 0.9])
-    ), axis=0
-)
+coordinates = sample_points(39, "clusters")
 
 # coordinates = np.array([[0.2,0.2], [0.4,0.4], [0.9,0.9]])
 
@@ -27,7 +21,7 @@ root = wit.Hypercube([0, 0], 1, coordinates)
 root.quadDecompose()
 root.compress()
 seperation_factor = 0.5
-ws_pairs = wtd.disambiguate_paris(root.well_separated_pairs_decomposition(seperation_factor))
+ws_pairs = disambiguate_paris(root.well_separated_pairs_decomposition(seperation_factor))
 
 # For graphing
 nonTrivialPairs: list[list[wit.Hypercube]] = []    

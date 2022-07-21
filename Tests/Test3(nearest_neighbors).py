@@ -6,17 +6,9 @@ sys.path.append(parent)
 
 import whitney as wit
 import numpy as np
+from Debug import *
 
-coordinates = np.concatenate(
-    (
-        np.random.rand(10,2) * 0.1 + 0.1,
-        np.random.rand(10,2) * 0.1 + 0.9,
-        np.random.rand(10,2) * 0.1 + np.array([0.1, 0.9])
-    ), axis=0
-)
-
-trivial_coordinates = np.array([[0.2,0.2], [0.4,0.4], [0.9,0.9]])
-
+coordinates = sample_points(30, "clusters")
 
 root = wit.Hypercube([0, 0], 1, coordinates)
 root.quadDecompose()

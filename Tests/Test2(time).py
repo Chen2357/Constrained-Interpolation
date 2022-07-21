@@ -8,6 +8,7 @@ import numpy as np
 import whitney as wit
 import matplotlib.pyplot as plt
 import timeit
+from Debug import *
 
 # np.random.seed(223)
 
@@ -28,18 +29,8 @@ for i in r:
     start_time = timeit.default_timer()
     total_pairs = 0
     for j in range(trials):
+        coordinates = sample_points(i, "random")
         
-        # coordinates = np.concatenate(
-        #     (
-        #         np.random.rand(i//3,2) * 0.1 + 0.1,
-        #         np.random.rand(i//3,2) * 0.1 + 0.9,
-        #         np.random.rand(i//3,2) * 0.1 + np.array([0.1, 0.9])
-        #     ), axis=0
-        # )
-        
-        coordinates = np.random.rand(i,2)
-        
-        ## Functions which we are testing
         root = wit.Hypercube([0, 0], 1, coordinates)
         root.quadDecompose()
         root.compress()
