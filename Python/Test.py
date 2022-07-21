@@ -1,7 +1,14 @@
-import numpy as np
+import sys
+import os
+current = os.path.dirname(os.path.realpath(__file__))
+parent = os.path.dirname(current)
+sys.path.append(parent)
+
+
 import whitney as wit
 import whitney.Debug as wtd
 
+import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.collections import PatchCollection
 from matplotlib.patches import Rectangle

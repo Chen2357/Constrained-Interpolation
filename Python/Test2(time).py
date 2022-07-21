@@ -1,3 +1,9 @@
+import sys
+import os
+current = os.path.dirname(os.path.realpath(__file__))
+parent = os.path.dirname(current)
+sys.path.append(parent)
+
 import numpy as np
 import whitney as wit
 import matplotlib.pyplot as plt
