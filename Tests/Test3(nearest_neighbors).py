@@ -29,12 +29,9 @@ root.compress()
 seperation_factor = 0.5
 ws_pairs = root.well_separated_pairs_decomposition(seperation_factor)
 
-
-filtered_pairs = wit.filter_pairs(ws_pairs, 2)
-nearest_neighbors, distances = wit.find_nearest_neighbor(filtered_pairs, root.points[0], 2)
+nearest_neighbors = wit.all_nearest_neighbors(ws_pairs, 2)[root.points[0].tobytes()]
 print(root.points[0])
 print(nearest_neighbors)
-print(distances)
 print()
 
 nearest_index = np.argmin(np.max(np.abs(root.points[1:] - root.points[0]),1))

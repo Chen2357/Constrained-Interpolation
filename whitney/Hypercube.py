@@ -1,10 +1,11 @@
 import numpy as np
 import numpy.typing as npt
-from typing import Union
+from typing import Union, Dict
 import queue
 import matplotlib.pyplot as plt
 from matplotlib.collections import PatchCollection
 from matplotlib.patches import Rectangle
+from collections import defaultdict
 
 class Hypercube:
     def __init__(self, pos: npt.ArrayLike, width: float, points: Union[npt.ArrayLike, None] = None, level: int = 0) -> None:
@@ -165,20 +166,56 @@ def well_separated_paris(u: Hypercube, v: Hypercube, s: float):
 
         return [pair for child in children for pair in well_separated_paris(child, v, s)]
 
+
+def all_nearest_neighbors(well_separated_pairs: list[list[Hypercube]], k: int):
+    neighbors: Dict["bytes", list[npt.NDArray]] = defaultdict(list[npt.NDArray])
+    for pair in well_separated_pairs:
+        if len(pair[0].points) <= k:
+            for point in pair[0].points:
+                neighbors[point.tobytes()].append(pair[1].points)
+        if len(pair[1].points) <= k:
+            for point in pair[1].points:
+                neighbors[point.tobytes()].append(pair[0].points)
+
+    nearest_neighbors: Dict["bytes", npt.NDArray] = {}
+    for point_bytes in neighbors:
+        point = np.frombuffer(point_bytes)
+        distances = []
+        nearest_points = []
+
+        for p in np.concatenate(neighbors[point_bytes]):
+            if any(np.all(p == p2) for p2 in nearest_points):
+                continue            
+            
+            distance = np.max(np.abs(p - point))
+            index = np.searchsorted(distances, distance)
+            if len(nearest_points) < k:
+                distances.insert(index, distance)
+                nearest_points.insert(index, p)
+            elif index < k:
+                distances.insert(index, distance)
+                nearest_points.insert(index, p)
+                distances.pop()
+                nearest_points.pop()
+
+        nearest_neighbors[point_bytes] = np.array(nearest_points)
+
+    return nearest_neighbors
+
 def filter_pairs(pairs: list[list[Hypercube]], k):
     result = []
     for pair in pairs:
         if len(pair[0].points) <= k or len(pair[1].points) <= k:
             result.append(pair)
     return result
-    
+
 def find_nearest_neighbor(filtered_pairs: list[list[Hypercube]], point, k):
     neighbors = []
     for pair in filtered_pairs:
-        if pair[0].contains(point) and len(pair[0].points) <= 1:
+        if pair[0].contains(point) and len(pair[1].points) <= k:
             for p in pair[1].points:
                 neighbors.append(p)
-        elif pair[1].contains(point) and len(pair[1].points) <= 1:
+        elif pair[1].contains(point) and len(pair[0].points) <= k:
             for p in pair[0].points:
                 neighbors.append(p)
                 
