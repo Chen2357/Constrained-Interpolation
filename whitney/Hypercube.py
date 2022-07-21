@@ -179,25 +179,15 @@ def all_nearest_neighbors(well_separated_pairs: list[list[Hypercube]], k: int):
     nearest_neighbors: Dict["bytes", npt.NDArray] = {}
     for point_bytes in neighbors:
         point = np.frombuffer(point_bytes)
-        distances = []
-        nearest_points = []
 
-        for p in np.concatenate(neighbors[point_bytes]):
-            if any(np.all(p == p2) for p2 in nearest_points):
-                continue            
-            
-            distance = np.max(np.abs(p - point))
-            index = np.searchsorted(distances, distance)
-            if len(nearest_points) < k:
-                distances.insert(index, distance)
-                nearest_points.insert(index, p)
-            elif index < k:
-                distances.insert(index, distance)
-                nearest_points.insert(index, p)
-                distances.pop()
-                nearest_points.pop()
+        nearest_points = np.concatenate(neighbors[point_bytes])
+        nearest_points = np.unique(nearest_points, axis = 0)
+        distances = metric_distance(point, nearest_points)
 
-        nearest_neighbors[point_bytes] = np.array(nearest_points)
+        indices = distances.argpartition(k-1)[:k]
+        order = distances[indices].argsort()
+
+        nearest_neighbors[point_bytes] = nearest_points[indices[order]]
 
     return nearest_neighbors
 
@@ -241,8 +231,5 @@ def find_nearest_neighbor(filtered_pairs: list[list[Hypercube]], point, k):
     
     return np.array(nearest_points), np.array(distances)
 
-    
-            
-
-
-
+def metric_distance(point: npt.NDArray, points: npt.NDArray) -> npt.NDArray:
+    return np.max(np.abs(points - point), 1)
