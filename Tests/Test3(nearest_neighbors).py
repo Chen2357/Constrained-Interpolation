@@ -24,12 +24,12 @@ root.compress()
 seperation_factor = 0.5
 ws_pairs = root.well_separated_pairs_decomposition(seperation_factor)
 
-test_point = 0
+test_point_index = 0
+test_point = root.points[test_point_index]
 
-nearest_neighbors = wit.all_nearest_neighbors(ws_pairs, 2)[root.points[test_point].tobytes()]
+nearest_neighbors = wit.all_nearest_neighbors(ws_pairs, 2)[test_point.tobytes()]
 print(root.points[0])
 print(nearest_neighbors)
-#print()
 
-nearest_index = np.argmin(np.max(np.abs(np.delete(root.points, test_point, 0) - root.points[test_point]),1))
-print(root.points[nearest_index + (1 if nearest_index >= test_point else 0)])
+nearest_index = np.argmin(wit.metric_distance(np.delete(root.points, test_point_index, 0), test_point))
+print(root.points[nearest_index + (1 if nearest_index >= test_point_index else 0)])
