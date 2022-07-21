@@ -12,8 +12,6 @@ from Debug import *
 
 # np.random.seed(223)
 
-plt.rcParams["figure.figsize"] = [7, 5]      
-
 trials = 3
 seperation_factor = 0.5
 k = 2
@@ -22,8 +20,6 @@ r = np.arange(3, 10000, 250)
 time = []
 num_pairs = []
 
-
-# Tests time of nested funcs
 for i in r: 
     print(i)
     start_time = timeit.default_timer()
@@ -44,6 +40,7 @@ for i in r:
 
 
 title = "Computing {} nearest neighbors for each point \n Trials per n: {}, Seperation factor: {}".format(k, trials, seperation_factor)
+plt.figure(figsize=(7, 5))
 fig, axs = plt.subplots(2, 1)
 
 axs[0].set_title(title)
