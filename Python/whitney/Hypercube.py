@@ -111,7 +111,6 @@ class Hypercube:
                 for child in cube.children:
                     if child is None: continue
                     q.put(child)
-
         return leaves
 
     def plot(self, ax, edgecolor='k', facecolor=None, alpha=0.5):
@@ -139,72 +138,6 @@ class Hypercube:
             if child.contain(point):
                 return child.search(point)
         return self
-
-    def pos_in_level(self):
-        pos = (self.pos - self.root.pos) / self.root.width
-        width = self.width / self.root.width
-
-        pos /= width
-        pos = np.round(pos).astype(int)
-        return pos
-    
-    def follow_path(self, path, test_point):
-        cube = self
-        level = cube.level
-        i = 0
-        while i < len(path):
-            if cube.isLeaf:
-                return cube
-            if len(cube.children[path[i]].points) == 0:
-                return cube
-            if not cube.children[path[i]].contain(test_point):
-                return cube.children[path[i]]
-            cube = cube.children[path[i]]
-            i += cube.level - level
-            level = cube.level
-        return cube                       
-    
-    def find_nearest_neighbor(self, point):
-        cutoff = 10
-        points_to_check = np.empty([0,self.dimension])
-        q = queue.Queue()
-        cube = self.search(point)
-        pos = cube.pos_in_level()
-        center = cube.pos + cube.width/2
-        for i in range(0,3**self.dimension):
-            relative_pos = ut.change_base(i,3,self.dimension)-1
-            if np.any(0 > pos + relative_pos) or np.any(pos + relative_pos >= 2 ** cube.level): 
-                continue
-            if np.all(relative_pos == 0):
-                continue
-            path = path_from_pos_in_level(pos + relative_pos, cube.level)
-            candiate_cube = self.follow_path(path, center + cube.width * relative_pos)
-            q.put(candiate_cube)
-        
-        while q.qsize() != 0:
-            cube = q.get()
-            if cube.contain(point):
-                continue
-            if cube.isLeaf:
-                points_to_check = np.append(points_to_check, cube.points, 0)
-                continue
-            if len(cube.points) > cutoff: # FLESH OUT
-                points_to_check = np.append(points_to_check, cube.points, 0)
-                continue
-            else:
-                points_to_check = np.append(points_to_check, cube.points, 0)
-        
-        nearest_index = np.argmin(np.max(np.abs(points_to_check - point),1))
-        return points_to_check[nearest_index]        
-            
-def path_from_pos_in_level(pos, level):
-    pos_binary = np.zeros((len(pos), level), int)
-    for i in range(len(pos)):
-        pos_binary[i]= ut.change_base(pos[i], 2, level)
-    path = np.zeros(level, int)
-    for j in range(level):
-        path[j] = ut.binary_to_int(pos_binary[:,j],True)
-    return path                 
     
 def is_well_separated(u: Hypercube, v: Hypercube, s: float):
     if u.isLeaf and v.isLeaf: return True
@@ -243,6 +176,49 @@ def disambiguate_paris(pairs: list[list[Hypercube]]):
         i += 1
     return pairs
 
+def filter_pairs(pairs: list[list[Hypercube]], k):
+    result = []
+    for pair in pairs:
+        if len(pair[0].points) <= k or len(pair[1].points) <= k:
+            result.append(pair)
+    return result
+    
+def find_nearest_neighbor(filtered_pairs: list[list[Hypercube]], point, k):
+    neighbors = []
+    for pair in filtered_pairs:
+        if pair[0].contain(point) and len(pair[0].points) <= 1:
+            for p in pair[1].points:
+                neighbors.append(p)
+        elif pair[1].contain(point) and len(pair[1].points) <= 1:
+            for p in pair[0].points:
+                neighbors.append(p)
+                
+    if len(neighbors) < k:
+        raise ValueError("not enough points")
+
+    nearest_points = []
+    distances = []
+    
+    for p in neighbors:
+        if any(np.all(p == p2) for p2 in nearest_points):
+            continue            
+        
+        distance = np.max(np.abs(p - point))
+        index = np.searchsorted(distances, distance)
+        if len(nearest_points) < k:
+            distances.insert(index, distance)
+            nearest_points.insert(index, p)
+        elif index < k:
+            distances.insert(index, distance)
+            nearest_points.insert(index, p)
+            distances.pop()
+            nearest_points.pop()
+
+    
+    return np.array(nearest_points), np.array(distances) #, second_nearest_point
+
+    
+            
 
 
 

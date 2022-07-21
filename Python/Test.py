@@ -17,13 +17,14 @@ coordinates = np.concatenate(
 trivial_coordinates = np.array([[0.2,0.2], [0.4,0.4], [0.9,0.9]])
 
 
-root = wit.Hypercube([0, 0], 1, trivial_coordinates)
+root = wit.Hypercube([0, 0], 1, coordinates)
 root.quadDecompose()
 root.compress()
+seperation_factor = 0.5
+wspairs = wit.disambiguate_paris(root.well_separated_pairs_decomposition(seperation_factor))
 
-s = 1
-wspairs = wit.disambiguate_paris(root.well_separated_pairs_decomposition(s))
-nonTrivialPairs: list[list[wit.Hypercube]] = []         
+# For graphing
+nonTrivialPairs: list[list[wit.Hypercube]] = []    
 for pair in wspairs: 
     if len(pair[0].points) > 1 or len(pair[1].points) > 1:
         nonTrivialPairs.append(pair)

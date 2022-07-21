@@ -3,17 +3,17 @@ import whitney as wit
 import matplotlib.pyplot as plt
 import timeit
 
-np.random.seed(223)
+#   np.random.seed(223)
 
-start_time = timeit.default_timer()
 plt.rcParams["figure.figsize"] = [5, 5]      
 
 # Tests time of nested func
-r = np.arange(3,10,1)
+r = np.arange(3,500,50)
 dt = []
 for i in r: 
     print(i)
-    for j in range(2):
+    start_time = timeit.default_timer()
+    for j in range(5):
         coordinates = np.concatenate(
             (
                 np.random.rand(i,2) * 0.1 + 0.1,
@@ -22,11 +22,16 @@ for i in r:
             ), axis=0
         )
         ## Functions which we are testing
-        start_time  = timeit.default_timer()
         root = wit.Hypercube([0, 0], 1, coordinates)
         root.quadDecompose()
         root.compress()
-        pointy = root.find_nearest_neighbor(coordinates[0])
+        seperation_factor = 0.5
+        wspairs = root.well_separated_pairs_decomposition(seperation_factor)
+        
+        
+        filtered_pairs = wit.filter_pairs(wspairs, 2)
+        nearest_neighbors, distances = wit.find_nearest_neighbor(filtered_pairs, root.points[0], 2)
+        
     dt.append((timeit.default_timer()-start_time)/(1+i*np.log(i))) # log plot
     #dt.append((timeit.default_timer()-start_time)) # linear plot
     
