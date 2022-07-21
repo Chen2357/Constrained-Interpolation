@@ -117,7 +117,7 @@ class Hypercube:
         if self.dimension != 2:
             raise ValueError("Dimension must be 2 to use plot")
 
-        plt.scatter(self.points[:,0], self.points[:,1], marker="x")
+        plt.scatter(self.points[:,0], self.points[:,1], marker = "x")
         pc = PatchCollection(
             [Rectangle(cube.pos, cube.width, cube.width) for cube in self.leaves],
             edgecolor=edgecolor,
@@ -127,7 +127,7 @@ class Hypercube:
         ax.add_collection(pc)
 
     def well_separated_pairs_decomposition(self, s: float):
-        return well_separated_paris(self, self, s)
+        return well_separated_pairs(self, self, s)
     
     def contains(self, point: npt.ArrayLike):
         return np.all(self.pos < point) and np.all(point < self.pos + self.width)
@@ -146,7 +146,7 @@ class Hypercube:
 
         return radius < s * distance
 
-def well_separated_paris(u: Hypercube, v: Hypercube, s: float):
+def well_separated_pairs(u: Hypercube, v: Hypercube, s: float):
     if u.isLeaf and v.isLeaf and u == v: return []
     if u.rep is None or v.rep is None:
         return []
@@ -164,8 +164,7 @@ def well_separated_paris(u: Hypercube, v: Hypercube, s: float):
         else:
             children = u.children
 
-        return [pair for child in children for pair in well_separated_paris(child, v, s)]
-
+        return [pair for child in children for pair in well_separated_pairs(child, v, s)]
 
 def all_nearest_neighbors(well_separated_pairs: list[list[Hypercube]], k: int):
     neighbors: Dict["bytes", list[npt.NDArray]] = defaultdict(list[npt.NDArray])
