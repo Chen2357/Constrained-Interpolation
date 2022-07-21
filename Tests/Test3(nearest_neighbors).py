@@ -5,12 +5,7 @@ parent = os.path.dirname(current)
 sys.path.append(parent)
 
 import whitney as wit
-
 import numpy as np
-import matplotlib.pyplot as plt
-from matplotlib.collections import PatchCollection
-from matplotlib.patches import Rectangle
-from ipywidgets import interact
 
 coordinates = np.concatenate(
     (
@@ -34,7 +29,7 @@ test_point = 0
 nearest_neighbors = wit.all_nearest_neighbors(ws_pairs, 2)[root.points[test_point].tobytes()]
 print(root.points[0])
 print(nearest_neighbors)
-print()
+#print()
 
 nearest_index = np.argmin(np.max(np.abs(np.delete(root.points, test_point, 0) - root.points[test_point]),1))
 print(root.points[nearest_index + 1])
