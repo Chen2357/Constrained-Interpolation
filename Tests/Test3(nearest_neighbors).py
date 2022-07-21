@@ -32,4 +32,4 @@ print(nearest_neighbors)
 #print()
 
 nearest_index = np.argmin(np.max(np.abs(np.delete(root.points, test_point, 0) - root.points[test_point]),1))
-print(root.points[nearest_index + 1])
+print(root.points[nearest_index + (1 if nearest_index >= test_point else 0)])
