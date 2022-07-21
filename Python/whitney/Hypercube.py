@@ -3,7 +3,6 @@ import numpy.typing as npt
 from typing import Union
 import queue
 import matplotlib.pyplot as plt
-from . import Utilities as ut
 from matplotlib.collections import PatchCollection
 from matplotlib.patches import Rectangle
 
@@ -129,28 +128,28 @@ class Hypercube:
     def well_separated_pairs_decomposition(self, s: float):
         return well_separated_paris(self, self, s)
     
-    def contain(self, point: npt.ArrayLike):
+    def contains(self, point: npt.ArrayLike):
         return np.all(self.pos < point) and np.all(point < self.pos + self.width)
     
     def search(self, point: npt.ArrayLike):
         for child in self.children:
             if child is None: continue
-            if child.contain(point):
+            if child.contains(point):
                 return child.search(point)
         return self
-    
-def is_well_separated(u: Hypercube, v: Hypercube, s: float):
-    if u.isLeaf and v.isLeaf: return True
-    distance = np.max(np.abs(u.rep - v.rep))
-    radius = u.width + v.width
 
-    return radius < s * distance
+    def is_well_separated(self, other: "Hypercube", s: float):
+        if self.isLeaf and other.isLeaf: return True
+        distance = np.max(np.abs(self.rep - other.rep))
+        radius = self.width + other.width
+
+        return radius < s * distance
 
 def well_separated_paris(u: Hypercube, v: Hypercube, s: float):
     if u.isLeaf and v.isLeaf and u == v: return []
     if u.rep is None or v.rep is None:
         return []
-    elif is_well_separated(u, v, s):
+    elif u.is_well_separated(v, s):
         return [[u, v]]
     else:
         if not u.isLeaf and not v.isLeaf:
@@ -166,16 +165,6 @@ def well_separated_paris(u: Hypercube, v: Hypercube, s: float):
 
         return [pair for child in children for pair in well_separated_paris(child, v, s)]
 
-def disambiguate_paris(pairs: list[list[Hypercube]]):
-    i = 0
-    while i < len(pairs):
-        for j in range(i+1, len(pairs)):
-            if (pairs[i][1] == pairs[j][0] and pairs[i][0] == pairs[j][1]) or pairs[i] == pairs[j]:
-                del pairs[j]
-                break
-        i += 1
-    return pairs
-
 def filter_pairs(pairs: list[list[Hypercube]], k):
     result = []
     for pair in pairs:
@@ -186,10 +175,10 @@ def filter_pairs(pairs: list[list[Hypercube]], k):
 def find_nearest_neighbor(filtered_pairs: list[list[Hypercube]], point, k):
     neighbors = []
     for pair in filtered_pairs:
-        if pair[0].contain(point) and len(pair[0].points) <= 1:
+        if pair[0].contains(point) and len(pair[0].points) <= 1:
             for p in pair[1].points:
                 neighbors.append(p)
-        elif pair[1].contain(point) and len(pair[1].points) <= 1:
+        elif pair[1].contains(point) and len(pair[1].points) <= 1:
             for p in pair[0].points:
                 neighbors.append(p)
                 
@@ -213,9 +202,8 @@ def find_nearest_neighbor(filtered_pairs: list[list[Hypercube]], point, k):
             nearest_points.insert(index, p)
             distances.pop()
             nearest_points.pop()
-
     
-    return np.array(nearest_points), np.array(distances) #, second_nearest_point
+    return np.array(nearest_points), np.array(distances)
 
     
             

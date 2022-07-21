@@ -3,7 +3,7 @@ import whitney as wit
 import matplotlib.pyplot as plt
 import timeit
 
-#   np.random.seed(223)
+# np.random.seed(223)
 
 plt.rcParams["figure.figsize"] = [5, 5]      
 
@@ -26,10 +26,9 @@ for i in r:
         root.quadDecompose()
         root.compress()
         seperation_factor = 0.5
-        wspairs = root.well_separated_pairs_decomposition(seperation_factor)
+        ws_pairs = root.well_separated_pairs_decomposition(seperation_factor)
         
-        
-        filtered_pairs = wit.filter_pairs(wspairs, 2)
+        filtered_pairs = wit.filter_pairs(ws_pairs, 2)
         nearest_neighbors, distances = wit.find_nearest_neighbor(filtered_pairs, root.points[0], 2)
         
     dt.append((timeit.default_timer()-start_time)/(1+i*np.log(i))) # log plot

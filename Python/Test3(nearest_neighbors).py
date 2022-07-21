@@ -21,10 +21,10 @@ root = wit.Hypercube([0, 0], 1, coordinates)
 root.quadDecompose()
 root.compress()
 seperation_factor = 0.5
-wspairs = root.well_separated_pairs_decomposition(seperation_factor)
+ws_pairs = root.well_separated_pairs_decomposition(seperation_factor)
 
 
-filtered_pairs = wit.filter_pairs(wspairs, 2)
+filtered_pairs = wit.filter_pairs(ws_pairs, 2)
 nearest_neighbors, distances = wit.find_nearest_neighbor(filtered_pairs, root.points[0], 2)
 print(root.points[0])
 print(nearest_neighbors)

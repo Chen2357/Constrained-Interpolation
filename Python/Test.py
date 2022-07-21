@@ -1,5 +1,6 @@
 import numpy as np
 import whitney as wit
+import whitney.Debug as wtd
 
 import matplotlib.pyplot as plt
 from matplotlib.collections import PatchCollection
@@ -14,23 +15,22 @@ coordinates = np.concatenate(
     ), axis=0
 )
 
-trivial_coordinates = np.array([[0.2,0.2], [0.4,0.4], [0.9,0.9]])
-
+# coordinates = np.array([[0.2,0.2], [0.4,0.4], [0.9,0.9]])
 
 root = wit.Hypercube([0, 0], 1, coordinates)
 root.quadDecompose()
 root.compress()
 seperation_factor = 0.5
-wspairs = wit.disambiguate_paris(root.well_separated_pairs_decomposition(seperation_factor))
+ws_pairs = wtd.disambiguate_paris(root.well_separated_pairs_decomposition(seperation_factor))
 
 # For graphing
 nonTrivialPairs: list[list[wit.Hypercube]] = []    
-for pair in wspairs: 
+for pair in ws_pairs: 
     if len(pair[0].points) > 1 or len(pair[1].points) > 1:
         nonTrivialPairs.append(pair)
 
 # Need Pseudocode
-@interact(i=(0, max(len(nonTrivialPairs)-1, 0)), j=(0, max(len(wspairs)-1,0)))
+@interact(i=(0, max(len(nonTrivialPairs)-1, 0)), j=(0, max(len(ws_pairs)-1,0)))
 def checkPairs(i, j):
     fig, ax = plt.subplots(1)
     root.plot(ax)
@@ -44,8 +44,8 @@ def checkPairs(i, j):
         collection = PatchCollection(rectangles, alpha=0.5, edgecolor='k',facecolor='r')
         ax.add_collection(collection)
 
-    if len(wspairs) != 0:
-        pair = wspairs[j]
+    if len(ws_pairs) != 0:
+        pair = ws_pairs[j]
         rectangles = [
             Rectangle(pair[0].pos, pair[0].width, pair[0].width),
             Rectangle(pair[1].pos, pair[1].width, pair[1].width)
