@@ -226,4 +226,5 @@ def all_nearest_neighbors(well_separated_pairs: list[list[Hypercube]], k: int):
 
 def metric_distance(point: npt.NDArray, points: npt.NDArray) -> npt.NDArray:
     """Computed distance using L_infinity metric."""
-    return np.max(np.abs(points - point), 1)
+    return np.max(np.abs(points - point).reshape(-1,len(point)), 1)
+
