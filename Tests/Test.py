@@ -18,10 +18,11 @@ coordinates = sample_points(39, "clusters")
 # coordinates = np.array([[0.2,0.2], [0.4,0.4], [0.9,0.9]])
 
 root = wit.Hypercube([0, 0], 1, coordinates)
-root.quadDecompose()
+root.quad_decompose()
 root.compress()
 seperation_factor = 0.5
 ws_pairs = disambiguate_paris(root.well_separated_pairs_decomposition(seperation_factor))
+nearest_neighbors = wit.all_nearest_neighbors(ws_pairs, 3)[test_point.tobytes()]
 
 # For graphing
 nonTrivialPairs: list[list[wit.Hypercube]] = []    

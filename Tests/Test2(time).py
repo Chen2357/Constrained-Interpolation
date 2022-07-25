@@ -28,7 +28,7 @@ for i in r:
         coordinates = sample_points(i, "random")
         
         root = wit.Hypercube([0, 0], 1, coordinates)
-        root.quadDecompose()
+        root.quad_decompose()
         root.compress()
         ws_pairs = root.well_separated_pairs_decomposition(seperation_factor)
         nearest_neighbors = wit.all_nearest_neighbors(ws_pairs, k)

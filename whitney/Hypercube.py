@@ -84,7 +84,7 @@ class Hypercube:
             )
             self.children[i].parent = self
             
-    def quadDecompose(self):
+    def quad_decompose(self):
         """Construct the quadtree recursively using subdivide such that every point is contained within a leaf node."""
         q = queue.Queue()
         q.put(self)
