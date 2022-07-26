@@ -49,6 +49,10 @@ class Hypercube:
     def isLeaf(self):
         """True when number points in this hypercube is <= 1, False otherwise."""
         return len(self.points) <= 1
+    
+    @property
+    def has_no_children(self):
+        return all(child is None for child in self.children)
 
     @property
     def rep(self):
@@ -130,7 +134,7 @@ class Hypercube:
             cube: Hypercube
             cube = q.get()
 
-            if cube.isLeaf:
+            if cube.has_no_children: # Make this .isleaf if looking at quadtree
                 leaves.append(cube)
             else:
                 for child in cube.children:
@@ -155,9 +159,9 @@ class Hypercube:
         """Uses quadtree wih .self as root to return list of tuples of well seperated hypercubes. See [pdf] for details."""
         return well_separated_pairs(self, self, s)
     
-    def contains(self, point: npt.ArrayLike):
-        """Returns True if input point lies within .self, returns False otherwise."""
-        return np.all(self.pos < point) and np.all(point < self.pos + self.width)
+    def contains(self, points: npt.ArrayLike):
+        """Returns array of Booleans to indicate which input points lie within .self, returns False otherwise."""
+        return np.all(self.pos < points.reshape(-1,self.dimension), axis = 1) & np.all(points.reshape(-1,self.dimension) < self.pos + self.width,  axis = 1)
     
     def search(self, point: npt.ArrayLike):
         """Returns the leaf node that contaisn input point."""
@@ -176,6 +180,73 @@ class Hypercube:
         radius = self.width + other.width
 
         return radius < s * distance
+    
+    def whitney_square(self, point: npt.ArrayLike, target_width: float):
+        leaf = self.search(point)
+        result = []
+        level = 0
+        width = leaf.width
+        while width >= target_width / 4:
+            if width > 4 * target_width:
+                level += 1 
+                width /= 2
+                continue
+            for i in range(2**level):
+                for j in range(2**level):
+                    pos = np.array([i * width, j * width]) + leaf.pos
+                    center = pos + width / 2 
+                    distance = metric_distance(center, point)
+                    if distance <= (width / 2) * 1.1:
+                        dilated_cube = Hypercube(pos - width, 3 * width)
+                        if len(self.search_in(dilated_cube)) <= 1:
+                            result.append(Hypercube(pos, width))
+            if result != []:
+                return result
+            level += 1 
+            width /= 2
+        return result
+    
+    def whitney_decompose(self):
+        """Construct the quadtree recursively using subdivide such that every point is contained within a leaf node."""
+        q = queue.Queue()
+        q.put(self)
+        while q.qsize() != 0:
+            cube: Hypercube = q.get()
+            center = cube.pos + cube.width/2
+            distances = metric_distance(center, self.points)
+            sum_squares = np.sum(distances <= cube.width * 1.5)
+            if sum_squares <= 1:
+                # print(cube.pos, cube.width)
+                continue
+        
+            cube.subdivide()
+            for child in cube.children:
+                q.put(child)
+                
+    def intersects(self, other: "Hypercube"):
+        return np.all(self.pos <= other.pos + other.width) and np.all(other.pos <= self.pos + self.width)
+    
+    def is_subset(self, other: "Hypercube"):
+        return np.all(self.pos >= other.pos) and np.all(other.pos + other.width >= self.pos + self.width)
+    
+    def search_in(self, cube: "Hypercube"):
+        q = queue.Queue()
+        q.put(self)
+        result = []
+        while q.qsize() != 0:
+            c = q.get() 
+            if c.is_subset(cube):
+                result.append(c.points)
+            elif c.has_no_children:
+                result.append(c.points[cube.contains(c.points)])
+            else: 
+                for child in c.children:
+                    if child is not None and child.intersects(cube):
+                        q.put(child)
+        return np.concatenate(result)
+
+        
+        
 
 def well_separated_pairs(u: Hypercube, v: Hypercube, s: float):
     """Returns well-seperated pairs for the Cartesian Product of points in u and v as a list of tuples of hypercubes."""

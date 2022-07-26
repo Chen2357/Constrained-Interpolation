@@ -31,9 +31,18 @@ for i in r:
         root.quad_decompose()
         root.compress()
         ws_pairs = root.well_separated_pairs_decomposition(seperation_factor)
-        nearest_neighbors = wit.all_nearest_neighbors(ws_pairs, k)
         
-        total_pairs += len(ws_pairs)
+        # total_pairs += len(ws_pairs)
+        
+        all_nearest_neighbors = wit.all_nearest_neighbors(ws_pairs, k)
+        
+        for test_point_index in range(i):
+            test_point = root.points[test_point_index]
+            nearest_neighbors = all_nearest_neighbors[test_point.tobytes()]
+            
+            distance = wit.metric_distance(test_point, nearest_neighbors[0])
+            # wit_square = root.whitney_square(test_point, distance, nearest_neighbors)
+            wit_square = root.whitney_square(test_point, distance)
         
     time.append((timeit.default_timer() - start_time) / trials / (1 + i * np.log(i)))
     num_pairs.append((total_pairs / trials)/(1 + i))
@@ -48,10 +57,10 @@ axs[0].plot(r[1:], time[1:]) # log plot
 axs[0].set_ylabel('Time / nlog(n)')
 axs[0].grid(True)
 
-axs[1].plot(r[1:], num_pairs[1:])
-axs[1].set_ylabel('#total pairs in WSPD / n')
-axs[1].set_xlabel('n')
-axs[1].grid(True)
+# axs[1].plot(r[1:], num_pairs[1:])
+# axs[1].set_ylabel('#total pairs in WSPD / n')
+# axs[1].set_xlabel('n')
+# axs[1].grid(True)
 
 fig.tight_layout()
 plt.show()
