@@ -134,7 +134,7 @@ class Hypercube:
             cube: Hypercube
             cube = q.get()
 
-            if cube.has_no_children: # Make this .isleaf if looking at quadtree
+            if cube.has_no_children: # Make this .isLeaf if looking at quadtree
                 leaves.append(cube)
             else:
                 for child in cube.children:
@@ -164,7 +164,7 @@ class Hypercube:
         return np.all(self.pos <= points.reshape(-1,self.dimension), axis = 1) & np.all(points.reshape(-1,self.dimension) < self.pos + self.width,  axis = 1)
     
     def search(self, point: npt.ArrayLike):
-        """Returns the leaf node that contaisn input point."""
+        """Returns the leaf node that contains input point."""
         if self.isLeaf and self.contains(point):
             return self
         for child in self.children:
@@ -234,7 +234,7 @@ class Hypercube:
         q.put(self)
         result = []
         while q.qsize() != 0:
-            c = q.get() 
+            c: Hypercube = q.get() 
             if c.is_subset(cube):
                 result.append(c.points)
             elif c.has_no_children:
@@ -243,10 +243,34 @@ class Hypercube:
                 for child in c.children:
                     if child is not None and child.intersects(cube):
                         q.put(child)
+        if result == []:
+            return np.empty([0, self.dimension])
         return np.concatenate(result)
 
         
+    def query_nearest_point(self, query: npt.ArrayLike):
+        smallest_cube = self
+        while not smallest_cube.has_no_children:
+            center = smallest_cube.pos + smallest_cube.width/2
+            kernel = query > center
+            child_index = np.packbits(kernel, bitorder='little')[0]
+
+            if len(smallest_cube.children[child_index].points) >= 1:
+                smallest_cube = smallest_cube.children[child_index]
+            elif len(smallest_cube.children[child_index].points) == 0:
+                break
+            
+        candidate_radii = metric_distance(query, smallest_cube.points)
+        candidate_index = np.argmin(candidate_radii)
+        candidate = smallest_cube.points[candidate_index]
+        radius = candidate_radii[candidate_index]
+
+        points = self.search_in(Hypercube(query - radius/2, radius))
+        if len(points) == 0:
+            return candidate
+        nearest_index = np.argmin(metric_distance(query, points))
         
+        return points[nearest_index]
 
 def well_separated_pairs(u: Hypercube, v: Hypercube, s: float):
     """Returns well-seperated pairs for the Cartesian Product of points in u and v as a list of tuples of hypercubes."""
