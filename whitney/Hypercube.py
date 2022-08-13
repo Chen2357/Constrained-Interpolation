@@ -99,7 +99,7 @@ class Hypercube:
             cube.subdivide()
             for child in cube.children:
                 q.put(child)
-
+            
     def compress(self):
         """Eliminates all internal nodes which contain only one nonempty child. Modifies parent and children attributes accordingly."""
         q = queue.Queue()
@@ -161,7 +161,7 @@ class Hypercube:
     
     def contains(self, points: npt.ArrayLike):
         """Returns array of Booleans to indicate which input points lie within .self, returns False otherwise."""
-        return np.all(self.pos < points.reshape(-1,self.dimension), axis = 1) & np.all(points.reshape(-1,self.dimension) < self.pos + self.width,  axis = 1)
+        return np.all(self.pos <= points.reshape(-1,self.dimension), axis = 1) & np.all(points.reshape(-1,self.dimension) < self.pos + self.width,  axis = 1)
     
     def search(self, point: npt.ArrayLike):
         """Returns the leaf node that contaisn input point."""
@@ -170,7 +170,7 @@ class Hypercube:
         for child in self.children:
             if child.contains(point):
                 return child.search(point)
-        raise ValueError("The point is not in this hypercube.")
+        raise ValueError(point, self.pos, self.width, "The point is not in this hypercube.")
         
 
     def is_well_separated(self, other: "Hypercube", s: float):

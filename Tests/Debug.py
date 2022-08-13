@@ -30,5 +30,7 @@ def sample_points(count: int, type: str):
                 np.random.rand(count//3 + count % 3,2) * 0.1 + np.array([0.1, 0.9])
             ), axis=0
         )
-    
+    if type == "worst":
+        array = 2.0 ** np.arange(-1, -count-1, -1)
+        return np.vstack((array, array)).T
     raise ValueError("Unknown type")
