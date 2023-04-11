@@ -8,7 +8,7 @@ import whitney as wit
 import numpy as np
 from Debug import *
 import matplotlib.pyplot as plt
-coordinates = sample_points(50, "random")
+coordinates = sample_points(25, "random")
 
 root = wit.Hypercube([0, 0], 1, coordinates)
 root.quad_decompose()
@@ -23,7 +23,7 @@ root2.whitney_decompose()
 
 fig, ax = plt.subplots(1)
 # plt.figure(figsize=(5, 5))
-root2.plot(ax, edgecolor = None)
+root2.plot(ax, edgecolor = 'b')
 
 all_nearest_neighbors = wit.all_nearest_neighbors(ws_pairs, 2)
 for test_point_index in range(50):

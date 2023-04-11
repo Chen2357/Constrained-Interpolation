@@ -182,6 +182,7 @@ class Hypercube:
         return radius < s * distance
     
     def whitney_square(self, point: npt.ArrayLike, target_width: float):
+        """Returns all whitney squares whose 1.1 dilation contains a point"""
         leaf = self.search(point)
         result = []
         level = 0
@@ -207,7 +208,7 @@ class Hypercube:
         return result
     
     def whitney_decompose(self):
-        """Construct the quadtree recursively using subdivide such that every point is contained within a leaf node."""
+        """DEPRECATED, DO NOT USE"""
         q = queue.Queue()
         q.put(self)
         while q.qsize() != 0:

@@ -6,6 +6,7 @@ sys.path.append(parent)
 
 import whitney as wit
 import numpy as np
+import numpy.typing as npt
 
 def disambiguate_paris(pairs: list[list[wit.Hypercube]]):
     i = 0
@@ -18,7 +19,7 @@ def disambiguate_paris(pairs: list[list[wit.Hypercube]]):
     return pairs
 
 def sample_points(count: int, type: str):
-    """Types: random, clusters"""
+    """Types: random, clusters, worst"""
 
     if type == "random":
         return np.random.rand(count, 2)
@@ -34,3 +35,19 @@ def sample_points(count: int, type: str):
         array = 2.0 ** np.arange(-1, -count-1, -1)
         return np.vstack((array, array)).T
     raise ValueError("Unknown type")
+    
+def sample_polynomials(points: npt.NDArray, degree):
+    """Types: random"""
+    if len(points) == 0:
+        return {}
+    polynomials: wit.Polynomials = {}
+    dimension = len(points[0])
+    for point in points:
+        polynomials[point.tobytes()] = zero_polynomial(dimension, degree)
+    
+    return polynomials
+    
+def zero_polynomial(dimension, degree):
+    array = np.zeros(np.repeat(degree + 1, dimension))
+    return array
+        

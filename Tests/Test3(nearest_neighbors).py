@@ -9,7 +9,7 @@ import numpy as np
 from Debug import *
 import matplotlib.pyplot as plt
 
-coordinates = sample_points(20, "random")
+coordinates = sample_points(200, "clusters")
 
 root = wit.Hypercube([0, 0], 1, coordinates)
 root.quad_decompose()
