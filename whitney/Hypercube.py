@@ -9,7 +9,7 @@ from collections import defaultdict
 
 class Hypercube:
     """This is a hypercube object that serves as a node in our quadtree.
-    
+
     Attributes:
         pos:        Position of the corner with smallest value in every direction.
         width:      Side length of hypercube.
@@ -20,7 +20,7 @@ class Hypercube:
     """
     def __init__(self, pos: npt.ArrayLike, width: float, points: Union[npt.ArrayLike, None] = None, level: int = 0) -> None:
         """Initialize hypercube.
-        
+
         Inputs:
             pos:    Array, length determines dimension of hypercube.
             width:  Float.
@@ -49,7 +49,7 @@ class Hypercube:
     def isLeaf(self):
         """True when number points in this hypercube is <= 1, False otherwise."""
         return len(self.points) <= 1
-    
+
     @property
     def has_no_children(self):
         return all(child is None for child in self.children)
@@ -58,7 +58,7 @@ class Hypercube:
     def rep(self):
         """"Representative of hypercube. It is the first element in points attribute and None when points are empty."""
         return self.points[0] if len(self.points) else None
-    
+
     @property
     def root(self):
         """Furthest ancestor of hypercube in quadtree."""
@@ -87,7 +87,7 @@ class Hypercube:
                 self.level + 1
             )
             self.children[i].parent = self
-            
+
     def quad_decompose(self):
         """Construct the quadtree recursively using subdivide such that every point is contained within a leaf node."""
         q = queue.Queue()
@@ -95,11 +95,11 @@ class Hypercube:
         while q.qsize() != 0:
             cube: Hypercube = q.get()
             if cube.isLeaf: continue
-            
+
             cube.subdivide()
             for child in cube.children:
                 q.put(child)
-            
+
     def compress(self):
         """Eliminates all internal nodes which contain only one nonempty child. Modifies parent and children attributes accordingly."""
         q = queue.Queue()
@@ -158,11 +158,11 @@ class Hypercube:
     def well_separated_pairs_decomposition(self, s: float):
         """Uses quadtree wih .self as root to return list of tuples of well seperated hypercubes. See [pdf] for details."""
         return well_separated_pairs(self, self, s)
-    
+
     def contains(self, points: npt.ArrayLike):
         """Returns array of Booleans to indicate which input points lie within .self, returns False otherwise."""
         return np.all(self.pos <= points.reshape(-1,self.dimension), axis = 1) & np.all(points.reshape(-1,self.dimension) < self.pos + self.width,  axis = 1)
-    
+
     def search(self, point: npt.ArrayLike):
         """Returns the leaf node that contains input point."""
         if self.isLeaf and self.contains(point):
@@ -171,7 +171,7 @@ class Hypercube:
             if child.contains(point):
                 return child.search(point)
         raise ValueError(point, self.pos, self.width, "The point is not in this hypercube.")
-        
+
 
     def is_well_separated(self, other: "Hypercube", s: float):
         """Returns True if .self and input other are s-well-seperated, returns False otherwise."""
@@ -180,7 +180,7 @@ class Hypercube:
         radius = self.width + other.width
 
         return radius < s * distance
-    
+
     def whitney_square(self, point: npt.ArrayLike, target_width: float):
         leaf = self.search(point)
         result = []
@@ -188,24 +188,24 @@ class Hypercube:
         width = leaf.width
         while width >= target_width / 4:
             if width > 4 * target_width:
-                level += 1 
+                level += 1
                 width /= 2
                 continue
             for i in range(2**level):
                 for j in range(2**level):
                     pos = np.array([i * width, j * width]) + leaf.pos
-                    center = pos + width / 2 
+                    center = pos + width / 2
                     distance = metric_distance(center, point)
                     if distance <= (width / 2) * 1.1:
                         dilated_cube = Hypercube(pos - width, 3 * width)
                         if len(self.search_in(dilated_cube)) <= 1:
                             result.append(Hypercube(pos, width))
-            if result != []:
-                return result
-            level += 1 
+            # if result != []:
+            #     return result
+            level += 1
             width /= 2
         return result
-    
+
     def whitney_decompose(self):
         """Construct the quadtree recursively using subdivide such that every point is contained within a leaf node."""
         q = queue.Queue()
@@ -218,28 +218,28 @@ class Hypercube:
             if sum_squares <= 1:
                 # print(cube.pos, cube.width)
                 continue
-        
+
             cube.subdivide()
             for child in cube.children:
                 q.put(child)
-                
+
     def intersects(self, other: "Hypercube"):
         return np.all(self.pos <= other.pos + other.width) and np.all(other.pos <= self.pos + self.width)
-    
+
     def is_subset(self, other: "Hypercube"):
         return np.all(self.pos >= other.pos) and np.all(other.pos + other.width >= self.pos + self.width)
-    
+
     def search_in(self, cube: "Hypercube"):
         q = queue.Queue()
         q.put(self)
         result = []
         while q.qsize() != 0:
-            c: Hypercube = q.get() 
+            c: Hypercube = q.get()
             if c.is_subset(cube):
                 result.append(c.points)
             elif c.has_no_children:
                 result.append(c.points[cube.contains(c.points)])
-            else: 
+            else:
                 for child in c.children:
                     if child is not None and child.intersects(cube):
                         q.put(child)
@@ -247,7 +247,7 @@ class Hypercube:
             return np.empty([0, self.dimension])
         return np.concatenate(result)
 
-        
+
     def query_nearest_point(self, query: npt.ArrayLike):
         smallest_cube = self
         while not smallest_cube.has_no_children:
@@ -259,7 +259,7 @@ class Hypercube:
                 smallest_cube = smallest_cube.children[child_index]
             elif len(smallest_cube.children[child_index].points) == 0:
                 break
-            
+
         candidate_radii = metric_distance(query, smallest_cube.points)
         candidate_index = np.argmin(candidate_radii)
         candidate = smallest_cube.points[candidate_index]
@@ -269,7 +269,7 @@ class Hypercube:
         if len(points) == 0:
             return candidate
         nearest_index = np.argmin(metric_distance(query, points))
-        
+
         return points[nearest_index]
 
 def well_separated_pairs(u: Hypercube, v: Hypercube, s: float):
