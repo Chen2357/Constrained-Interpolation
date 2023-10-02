@@ -18,7 +18,7 @@ class Hypercube:
         parent:     Parent of this cube in quadtree.
         level:      How many subdivides to generate this hypercube from quadtree root (root hypercube has level 0).
     """
-    def __init__(self, pos: npt.ArrayLike, width: float, points: Union[npt.ArrayLike, None] = None, level: int = 0) -> None:
+    def __init__(self, pos: npt.ArrayLike, width: float, points: Union[npt.ArrayLike, None] = None, level: int = 0, pointed_jet = npt.ArrayLike) -> None:
         """Initialize hypercube.
 
         Inputs:
@@ -34,6 +34,7 @@ class Hypercube:
         self.children: list[Union[Hypercube, None]] = [None for _ in range(2**self.dimension)]
         self.parent: Union[Hypercube, None] = None
         self.level = level
+        self.pointed_jet = np.array(pointed_jet)
         #if len(self.pos) != np.size(self.points, 1):
         #    raise ValueError("Dimension mismatch")
 
@@ -161,10 +162,19 @@ class Hypercube:
 
     def contains(self, points: npt.ArrayLike):
         """Returns array of Booleans to indicate which input points lie within .self, returns False otherwise."""
-        return np.all(self.pos <= points.reshape(-1,self.dimension), axis = 1) & np.all(points.reshape(-1,self.dimension) < self.pos + self.width,  axis = 1)
+        return np.all(self.pos <= points.reshape(-1,self.dimension), axis = 1) & np.all(points.reshape(-1,self.dimension) < self.pos + self.width, axis = 1)
 
     def search(self, point: npt.ArrayLike):
-        """Returns the leaf node that contains input point."""
+        """Returns the node that contains input point and has no children."""
+        if self.has_no_children and self.contains(point):
+            return self
+        for child in self.children:
+            if child.contains(point):
+                return child.search(point)
+        raise ValueError(point, self.pos, self.width, "The point is not in this hypercube.")
+
+    def _search_leaf(self, point: npt.ArrayLike):
+        """Returns the leat node that contains input point"""
         if self.isLeaf and self.contains(point):
             return self
         for child in self.children:
@@ -183,7 +193,8 @@ class Hypercube:
 
     def whitney_square(self, point: npt.ArrayLike, target_width: float):
         """Returns all whitney squares whose 1.1 dilation contains a point"""
-        leaf = self.search(point)
+        """For test purpose only"""
+        leaf = self._search_leaf(point)
         result = []
         level = 0
         width = leaf.width
@@ -192,8 +203,8 @@ class Hypercube:
                 level += 1
                 width /= 2
                 continue
-            for i in range(2**level):
-                for j in range(2**level):
+            for i in [-1, 0, 1]:
+                for j in [-1, 0, 1]:
                     pos = np.array([i * width, j * width]) + leaf.pos
                     center = pos + width / 2
                     distance = metric_distance(center, point)
@@ -208,7 +219,7 @@ class Hypercube:
         return result
 
     def whitney_decompose(self):
-        """DEPRECATED, DO NOT USE"""
+        """Need to be improved, track points"""
         q = queue.Queue()
         q.put(self)
         while q.qsize() != 0:
@@ -224,13 +235,38 @@ class Hypercube:
             for child in cube.children:
                 q.put(child)
 
+    def cubes_dilation_contains_point(self, point: npt.ArrayLike, lamb : float):
+        base_cube = self.search(point)
+
+        q = queue.Queue()
+        q.put(self)
+        candidates = []
+
+        while q.qsize() != 0:
+            cube: Hypercube = q.get()
+            if base_cube.intersects(Hypercube(cube.pos - cube.width*(lamb-1)/2, cube.width*lamb)):
+
+                if cube.has_no_children:
+                    candidates.append(cube)
+                else:
+                    for child in cube.children:
+                        q.put(child)
+
+        result = []
+        for cube in candidates:
+            if Hypercube(cube.pos - cube.width*(lamb-1)/2, cube.width*lamb).contains(point):
+                result.append(cube)
+
+        return result
+
+
     def intersects(self, other: "Hypercube"):
         return np.all(self.pos <= other.pos + other.width) and np.all(other.pos <= self.pos + self.width)
 
     def is_subset(self, other: "Hypercube"):
         return np.all(self.pos >= other.pos) and np.all(other.pos + other.width >= self.pos + self.width)
 
-    def search_in(self, cube: "Hypercube"):
+    def search_in(self, cube: "Hypercube", num_point: int = None):
         q = queue.Queue()
         q.put(self)
         result = []
@@ -244,6 +280,8 @@ class Hypercube:
                 for child in c.children:
                     if child is not None and child.intersects(cube):
                         q.put(child)
+            if num_point != None and len(result) >= num_point:
+                break
         if result == []:
             return np.empty([0, self.dimension])
         return np.concatenate(result)
