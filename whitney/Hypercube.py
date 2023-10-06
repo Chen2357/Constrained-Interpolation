@@ -79,7 +79,7 @@ class Hypercube:
         for i in range(2**self.dimension):
             kernel = np.unpackbits(np.uint8(i), count=self.dimension, bitorder='little')
             # kernel[j] is j-th binary digit of i, 0th digit is unit digit
-            is_point_in_quad = np.all(quad_info == kernel, axis=1)
+            is_point_in_quad = np.all(quad_info == kernel, axis=tuple(range(1, self.dimension)))
 
             self.children[i] = Hypercube(
                 self.pos + self.width/2 * kernel,
