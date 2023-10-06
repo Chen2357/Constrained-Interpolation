@@ -3,7 +3,8 @@ import numpy.typing as npt
 from typing import Union, Dict
 import queue
 import matplotlib.pyplot as plt
-from matplotlib.collections import PatchCollection
+from matplotlib.axes import Axes
+from matplotlib.collections import PatchCollection, LineCollection
 from matplotlib.patches import Rectangle
 from collections import defaultdict
 
@@ -29,7 +30,7 @@ class Hypercube:
         """
         self.pos = np.array(pos)
         self.width = width
-        self.points = np.array(points) if points is not None else np.empty([0, len(self.pos)])
+        self.points = np.reshape(points, (-1, len(self.pos))) if points is not None else np.empty([0, len(self.pos)])
 
         self.children: list[Union[Hypercube, None]] = [None for _ in range(2**self.dimension)]
         self.parent: Union[Hypercube, None] = None
@@ -143,18 +144,24 @@ class Hypercube:
                     q.put(child)
         return leaves
 
-    def plot(self, ax, edgecolor='k', facecolor=None, alpha=0.5):
-        if self.dimension != 2:
-            raise ValueError("Dimension must be 2 to use plot")
+    def plot(self, ax: Axes, edgecolor='k', facecolor=None, alpha=0.5):
+        if self.dimension == 1:
+            plt.scatter([cube.pointed_jet[0] for cube in self.leaves], [cube.pointed_jet[1] for cube in self.leaves], marker = "x")
+            plt.vlines([cube.pos[0] for cube in self.leaves], 0, 1)
+            return
 
-        plt.scatter(self.points[:,0], self.points[:,1], marker = "x")
-        pc = PatchCollection(
-            [Rectangle(cube.pos, cube.width, cube.width) for cube in self.leaves],
-            edgecolor=edgecolor,
-            facecolor=facecolor,
-            alpha=alpha
-        )
-        ax.add_collection(pc)
+        if self.dimension == 2:
+            plt.scatter(self.points[:,0], self.points[:,1], marker = "x")
+            pc = PatchCollection(
+                [Rectangle(cube.pos, cube.width, cube.width) for cube in self.leaves],
+                edgecolor=edgecolor,
+                facecolor=facecolor,
+                alpha=alpha
+            )
+            ax.add_collection(pc)
+            return
+
+        raise ValueError("Dimension must be 1 or 2 to use plot.")
 
     def well_separated_pairs_decomposition(self, s: float):
         """Uses quadtree wih .self as root to return list of tuples of well seperated hypercubes. See [pdf] for details."""
