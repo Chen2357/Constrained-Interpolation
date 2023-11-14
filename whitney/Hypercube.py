@@ -169,6 +169,7 @@ class Hypercube:
 
     def contains(self, points: npt.ArrayLike):
         """Returns array of Booleans to indicate which input points lie within .self, returns False otherwise."""
+        points = np.array(points)
         return np.all(self.pos <= points.reshape(-1,self.dimension), axis = 1) & np.all(points.reshape(-1,self.dimension) < self.pos + self.width, axis = 1)
 
     def search(self, point: npt.ArrayLike):
@@ -242,7 +243,7 @@ class Hypercube:
             for child in cube.children:
                 q.put(child)
 
-    def cubes_dilation_contains_point(self, point: npt.ArrayLike, lamb : float):
+    def cubes_dilation_contains_point(self, point: npt.ArrayLike, lamb: float) -> list["Hypercube"]:
         base_cube = self.search(point)
 
         q = queue.Queue()
@@ -293,6 +294,8 @@ class Hypercube:
             return np.empty([0, self.dimension])
         return np.concatenate(result)
 
+    def dialated(self, lam: float):
+        return Hypercube(self.pos - self.width*(lam-1)/2, self.width*lam)
 
     def query_nearest_point(self, query: npt.ArrayLike):
         smallest_cube = self
