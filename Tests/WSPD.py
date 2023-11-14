@@ -5,7 +5,7 @@ parent = os.path.dirname(current)
 sys.path.append(parent)
 
 import whitney as wit
-from Debug import *
+from test_module import *
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -30,6 +30,7 @@ nonTrivialPairs: list[list[wit.Hypercube]] = []
 for pair in ws_pairs:
     if len(pair[0].points) > 1 or len(pair[1].points) > 1:
         nonTrivialPairs.append(pair)
+
 
 # Need Pseudocode
 @interact(i=(0, max(len(nonTrivialPairs)-1, 0)), j=(0, max(len(ws_pairs)-1,0)))

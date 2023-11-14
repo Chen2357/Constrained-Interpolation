@@ -8,7 +8,7 @@ import numpy as np
 import whitney as wit
 import matplotlib.pyplot as plt
 import timeit
-from Debug import *
+from test_module import *
 
 # np.random.seed(223)
 
@@ -20,30 +20,30 @@ r = np.arange(3, 10000, 250)
 time = []
 num_pairs = []
 
-for i in r: 
+for i in r:
     print(i)
     start_time = timeit.default_timer()
     total_pairs = 0
     for j in range(trials):
         coordinates = sample_points(i, "random")
-        
+
         root = wit.Hypercube([0, 0], 1, coordinates)
         root.quad_decompose()
         root.compress()
         ws_pairs = root.well_separated_pairs_decomposition(seperation_factor)
-        
+
         # total_pairs += len(ws_pairs)
-        
+
         all_nearest_neighbors = wit.all_nearest_neighbors(ws_pairs, k)
-        
+
         for test_point_index in range(i):
             test_point = root.points[test_point_index]
             nearest_neighbors = all_nearest_neighbors[test_point.tobytes()]
-            
+
             distance = wit.metric_distance(test_point, nearest_neighbors[0])
             # wit_square = root.whitney_square(test_point, distance, nearest_neighbors)
             wit_square = root.whitney_square(test_point, distance)
-        
+
     time.append((timeit.default_timer() - start_time) / trials / (1 + i * np.log(i)))
     num_pairs.append((total_pairs / trials)/(1 + i))
 

@@ -6,7 +6,7 @@ sys.path.append(parent)
 
 import whitney as wit
 import numpy as np
-from Debug import *
+from test_module import *
 import matplotlib.pyplot as plt
 coordinates = sample_points(50, "random")
 
