@@ -5,7 +5,7 @@ parent = os.path.dirname(current)
 sys.path.append(parent)
 
 import whitney as wit
-from Debug import *
+from test_module import *
 
 import numpy as np
 import matplotlib.pyplot as plt
