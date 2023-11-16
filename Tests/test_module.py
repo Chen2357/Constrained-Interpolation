@@ -18,7 +18,7 @@ def disambiguate_paris(pairs: list[list[wit.Hypercube]]):
         i += 1
     return pairs
 
-def sample_points(count: int, type: str):
+def sample_points(count: int, type: str = "random"):
     """Types: random, clusters, worst"""
 
     if type == "random":
