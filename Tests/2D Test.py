@@ -107,12 +107,12 @@ def plot(x, y):
     print("Second derivative change of BPR from green to red orientation:", np.abs(second_derivative(next_three_point, next_rad)) - np.abs(second_derivative(next_three_point, rad)))
 
 # %%
-def ref_axis_angle(points, width, a1, a2):
+def _best(points, width, a1, a2):
     if len(points) < 3:
         if len(points) == 2:
-            return np.arctan2(points[1,1] - points[0,1], points[1,0] - points[0,0])
+            return (0, np.arctan2(points[1,1] - points[0,1], points[1,0] - points[0,0]))
         else:
-            return 0
+            return (0, 0)
 
     best_rad = None
     minCurvature = a2 / width
@@ -135,13 +135,19 @@ def ref_axis_angle(points, width, a1, a2):
             minCurvature = maxCurvature
             best_rad = rad
 
-    return best_rad
+    return (minCurvature, best_rad)
+
+def ref_axis_angle(points, width, a1, a2):
+    return _best(points, width, a1, a2)[1]
+
+def best_curavture(points, width, a1, a2):
+    return _best(points, width, a1, a2)[0]
 
 # %%
 np.random.seed(123)
 # points = sample_points(100, "random")
 
-set1 = np.array([[x,x] for x in np.linspace(0.01, 0.49, 100)])
+set1 = np.array([[x, x] for x in np.linspace(0.01, 0.49, 100)])
 set2 = np.array([[x, 1.5-x] for x in np.linspace(0.51, 0.99, 100)])
 
 points = np.concatenate([set1, set2])
@@ -150,7 +156,7 @@ square = wit.Hypercube([0,0], 1, points)
 
 # biggest = wit.Hypercube([0,0], 0)
 
-a1 = 1
+a1 = 0.999
 a2 = 1
 
 q = queue.Queue()
@@ -168,7 +174,7 @@ while q.qsize() != 0:
     for child in cube.children:
         q.put(child)
 
-@interact(x=(0, 1, 0.01), y=(0, 1, 0.01))
+@interact(x=(0, 0.9999, 0.01), y=(0, 0.9999, 0.01))
 def plot(x, y):
     fig, ax = plt.subplots(1)
     square.plot(ax, edgecolor = 'b', facecolor = "None")
@@ -184,10 +190,17 @@ def plot(x, y):
     y = np.tan(cube.ref_axis_angle) * (x-0.5) + 0.5
     ax.plot(x, y, 'r')
 
+    worst_point = None
+    worst_curvature = -np.inf
     for point in square.search_in(cube.parent.dialated(3)):
         if point in cube.points:
             continue
 
-        angle = ref_axis_angle(np.concatenate([cube.points, [point]]), cube.parent.width, a1, a2)
-        if angle is None:
-            ax.plot(point[0], point[1], 'gx')
+        curvature = best_curavture(np.concatenate([cube.points, [point]]), cube.parent.width, a1, a2)
+        if curvature > worst_curvature:
+            worst_point = point
+            worst_curvature = curvature
+
+    if worst_point is not None:
+        ax.plot(worst_point[0], worst_point[1], 'ks')
+# %%
