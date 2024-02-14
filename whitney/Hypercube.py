@@ -39,8 +39,8 @@ class Hypercube:
         #if len(self.pos) != np.size(self.points, 1):
         #    raise ValueError("Dimension mismatch")
 
-    def __eq__(self, other: "Hypercube"):
-        return np.all(self.pos == other.pos) and self.width == other.width
+    # def __eq__(self, other: "Hypercube") -> bool:
+    #     return np.all(self.pos == other.pos) and self.width == other.width
 
     @property
     def dimension(self):
@@ -57,7 +57,7 @@ class Hypercube:
         return all(child is None for child in self.children)
 
     @property
-    def rep(self):
+    def rep(self) -> npt.NDArray | None:
         """"Representative of hypercube. It is the first element in points attribute and None when points are empty."""
         return self.points[0] if len(self.points) else None
 
@@ -82,13 +82,14 @@ class Hypercube:
             # kernel[j] is j-th binary digit of i, 0th digit is unit digit
             is_point_in_quad = np.all(quad_info == kernel, axis=tuple(range(1, self.dimension)))
 
-            self.children[i] = Hypercube(
+            cube = Hypercube(
                 self.pos + self.width/2 * kernel,
                 self.width/2,
                 self.points[is_point_in_quad],
                 self.level + 1
             )
-            self.children[i].parent = self
+            cube.parent = self
+            self.children[i] = cube
 
     def quad_decompose(self):
         """Construct the quadtree recursively using subdivide such that every point is contained within a leaf node."""
@@ -153,7 +154,7 @@ class Hypercube:
         if self.dimension == 2:
             plt.scatter(self.points[:,0], self.points[:,1], marker = "x")
             pc = PatchCollection(
-                [Rectangle(cube.pos, cube.width, cube.width) for cube in self.leaves],
+                [Rectangle(tuple[float, float](cube.pos), cube.width, cube.width) for cube in self.leaves],
                 edgecolor=edgecolor,
                 facecolor=facecolor,
                 alpha=alpha
@@ -167,7 +168,7 @@ class Hypercube:
         """Uses quadtree wih .self as root to return list of tuples of well seperated hypercubes. See [pdf] for details."""
         return well_separated_pairs(self, self, s)
 
-    def contains(self, points: npt.ArrayLike):
+    def contains(self, points: npt.ArrayLike) -> npt.NDArray[np.bool_]:
         """Returns array of Booleans to indicate which input points lie within .self, returns False otherwise."""
         points = np.array(points)
         return np.all(self.pos <= points.reshape(-1,self.dimension), axis = 1) & np.all(points.reshape(-1,self.dimension) < self.pos + self.width, axis = 1)
@@ -177,7 +178,7 @@ class Hypercube:
         if self.has_no_children and self.contains(point):
             return self
         for child in self.children:
-            if child.contains(point):
+            if child is not None and child.contains(point):
                 return child.search(point)
         raise ValueError(point, self.pos, self.width, "The point is not in this hypercube.")
 
@@ -186,14 +187,18 @@ class Hypercube:
         if self.isLeaf and self.contains(point):
             return self
         for child in self.children:
-            if child.contains(point):
+            if child is not None and child.contains(point):
                 return child.search(point)
         raise ValueError(point, self.pos, self.width, "The point is not in this hypercube.")
 
 
     def is_well_separated(self, other: "Hypercube", s: float):
         """Returns True if .self and input other are s-well-seperated, returns False otherwise."""
-        if self.isLeaf and other.isLeaf: return True
+        if self.isLeaf and other.isLeaf:
+            return True
+
+        assert self.rep is not None
+        assert other.rep is not None
         distance = metric_distance(self.rep, other.rep)
         radius = self.width + other.width
 
@@ -202,6 +207,7 @@ class Hypercube:
     def whitney_square(self, point: npt.ArrayLike, target_width: float):
         """Returns all whitney squares whose 1.1 dilation contains a point"""
         """For test purpose only"""
+        point = np.array(point)
         leaf = self._search_leaf(point)
         result = []
         level = 0
@@ -274,7 +280,7 @@ class Hypercube:
     def is_subset(self, other: "Hypercube"):
         return np.all(self.pos >= other.pos) and np.all(other.pos + other.width >= self.pos + self.width)
 
-    def search_in(self, cube: "Hypercube", num_point: int = None):
+    def search_in(self, cube: "Hypercube", num_point: int | None = None):
         q = queue.Queue()
         q.put(self)
         result = []
@@ -298,6 +304,7 @@ class Hypercube:
         return Hypercube(self.pos - self.width*(lam-1)/2, self.width*lam)
 
     def query_nearest_point(self, query: npt.ArrayLike):
+        query = np.array(query)
         smallest_cube = self
         while not smallest_cube.has_no_children:
             center = smallest_cube.pos + smallest_cube.width/2
@@ -321,7 +328,7 @@ class Hypercube:
 
         return points[nearest_index]
 
-def well_separated_pairs(u: Hypercube, v: Hypercube, s: float):
+def well_separated_pairs(u: Hypercube, v: Hypercube, s: float) -> list[tuple[Hypercube, Hypercube]]:
     """Returns well-seperated pairs for the Cartesian Product of points in u and v as a list of tuples of hypercubes."""
     if u.isLeaf and v.isLeaf and u == v: return []
     if u.rep is None or v.rep is None:
@@ -340,9 +347,9 @@ def well_separated_pairs(u: Hypercube, v: Hypercube, s: float):
         else:
             children = u.children
 
-        return [pair for child in children for pair in well_separated_pairs(child, v, s)]
+        return [pair for child in children if child is not None for pair in well_separated_pairs(child, v, s)]
 
-def all_nearest_neighbors(well_separated_pairs: list[list[Hypercube]], k: int):
+def all_nearest_neighbors(well_separated_pairs: list[tuple[Hypercube, Hypercube]], k: int):
     """Returns dictionary containing nearest k neighbors for all points."""
     neighbors: Dict["bytes", list[npt.NDArray]] = defaultdict(list[npt.NDArray])
     for pair in well_separated_pairs:
