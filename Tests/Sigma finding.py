@@ -4,6 +4,7 @@ import numpy as np
 from matplotlib.axes import Axes
 import matplotlib.pyplot as plt
 from ipywidgets.widgets import interact
+from soupsieve import closest
 
 def forward_transformation(x):
     return np.array([
@@ -34,39 +35,11 @@ def sigma_0(x):
 def scale(ellipsoid, c):
     return ellipsoid / c**2
 
-def sum_combination(points_1, points_2):
-    result = []
-    for p in points_1:
-        for q in points_2:
-            result.append(p + q)
-
-    return np.array(result)
-
 def sum(ellipsoid1, ellipsoid2):
-    guess = np.linalg.inv(np.linalg.inv(ellipsoid1) + np.linalg.inv(ellipsoid2))
-
-    bound1 = to_boundary_func(ellipsoid1)
-    bound2 = to_boundary_func(ellipsoid2)
-    p1 = approximate_polygon_3D(bound1, 20, 10)
-    p2 = approximate_polygon_3D(bound2, 20, 10)
-
-    result = []
-    for p in p1:
-        for q in p2:
-            result.append([p, q, p + q])
-
-    for i in range(len(result)):
-        p = result[i][2]
-        x = result[i][0]
-        y = result[i][1]
-        if p @ guess/2 @ p > 1:
-            print(ellipsoid1, ellipsoid2, p, x, y)
-            raise ValueError("Counterexample!!!")
-
-    return guess
+    return np.linalg.inv(np.linalg.inv(ellipsoid1) + np.linalg.inv(ellipsoid2))
 
 def intersection(ellipsoid1, ellipsoid2):
-    return ellipsoid1 + ellipsoid2
+    return (ellipsoid1 + ellipsoid2)
 
 def norm(x):
     return np.linalg.norm(x, ord=np.inf)
@@ -107,64 +80,121 @@ def to_boundary_func(elipse: np.ndarray):
 
     return boundary_func
 # %%
-def is_sin_5pix_over_270_in_sigma(sigma, x):
-    the_function = np.array([0, 5*np.pi/270, 0])
-    return the_function @ pullback(sigma, forward_transformation(-x)) @ the_function < 1
+def nearest_k_points(points, k):
+    """
+    Returns an n by k array of the k nearest points to each point in the n by d array points
+    """
+    distances = np.sum(points**2, axis=1).reshape(-1, 1) - 2 * points @ points.T + np.sum(points**2, axis=1).reshape(1, -1)
+    return np.argsort(distances, axis=1)[:, 1:k+1]
+
+def is_pos_def(x):
+    return np.all(np.linalg.eigvals(x) > 0)
+# %%
+# def is_sin_5pix_over_270_in_sigma(sigma, x):
+#     the_function = np.array([0, 5*np.pi/270, 0])
+#     return the_function @ pullback(sigma, forward_transformation(-x)) @ the_function < 1
 
 C = 2
 
+dim = 2
 E = np.array([
-    [0.2, 0.2],
-    [0.4, 0.4],
-    [0.6, 0.6],
-    [0.8, 0.8],
+    [0.01, 0.9],
+    [0.01, 0.8],
+    [0.01, 0.7],
+    [0.01, 0.6],
+    [0.01, 0.5],
+    [0.01, 0.4],
+    [0.01, 0.01],
+    [0.4, 0.01],
+    [0.5, 0.01],
+    [0.6, 0.01],
+    [0.7, 0.01],
+    [0.8, 0.01],
+    [0.9, 0.01],
 ])
+# E = np.random.rand(10, 2)
+
+inspection_index = 1
+
+closest_points_info = nearest_k_points(E, 2)
 
 sigma = np.array([sigma_0(x) for x in E])
 sigma_history = [sigma.copy()]
+
+artifical_expand = 1.5
+artifical_shrink = 0.5
 
 def recrusion(sigma):
     new_sigma = sigma
     for i in range(len(E)):
         x = E[i]
+
         for j in range(len(E)):
             if i == j:
                 continue
             y = E[j]
-            new_sigma[i] = intersection(new_sigma[i], sum(sigma[j], scale(ball(norm(x-y), x), C)))
-            if not is_sin_5pix_over_270_in_sigma(new_sigma[i], x):
-                print(f"i: {i}, j: {j}, n: {len(sigma_history)}")
-                print(new_sigma[i])
+            distance = norm(x-y)
+
+            new_sigma[i] = intersection(new_sigma[i], sum(sigma[j], scale(ball(distance, x), C)))
+
+        for j in closest_points_info[i]:
+            closest_point = E[j]
+
+            closest_point_unit_direction = (closest_point - x) / np.linalg.norm(closest_point - x, ord=2)
+
+            projection = np.outer(closest_point_unit_direction, closest_point_unit_direction)
+
+            shrink = 1/np.sqrt(artifical_expand) * (np.eye(dim) - projection) + 1/np.sqrt(artifical_shrink) * projection
+
+            shrink = np.block([
+                [1, np.zeros((1, dim))],
+                [np.zeros((dim, 1)), shrink]
+            ])
+
+            new_sigma[i] = pullback(shrink @ pullback(new_sigma[i], forward_transformation(-x)) @ shrink, forward_transformation(x))
 
     return new_sigma
 
-for i in range(7):
+for i in range(10):
     sigma = recrusion(sigma)
     sigma_history.append(sigma.copy())
-
 # %%
-# fig, ax = plt.subplots()
+# sigma_history = np.array(sigma_history)
+# scale = 1/np.linalg.det(sigma_history[:,0])
 
-def plot_sigma(ax, sigma, x):
+# j = 0
+# size = np.zeros(len(sigma_history))
+
+# for i in range(len(sigma_history)):
+#     size[i] = 1/np.linalg.det(pullback(sigma_history[i][j], forward_transformation(-E[j]))[1:,1:])
+
+# fig, ax = plt.subplots()
+# ax.plot(np.arange(1, 100), size[:99])
+# ax.set_yscale('log')
+# ax.set_xscale('log')
+# %%
+def plot_sigma_at(ax, sigma, x):
     pullback_sigma = pullback(sigma, forward_transformation(-x))
-    plot_convex_set(ax, to_boundary_func(pullback_sigma[1:,1:]))
+    n = 1000
+    points = approximate_polygon(to_boundary_func(pullback_sigma[1:,1:]), n)
+    points = points + x
+    ax.fill(points[:,0], points[:,1], alpha=0.5)
 
 # for i in range(len(E)):
 #     plot_sigma(ax, sigma_history[7][i], E[i])
 
-i = 0
+# i = 0
 
 # for j in range(len(sigma_history)):
 #     plot_sigma(ax, sigma_history[j][i], E[i])
 
 @interact(j=(0, len(sigma_history)-1))
-def plot(j):
+def plot_at(j):
     fig, ax = plt.subplots()
-    plot_sigma(ax, sigma_history[j][i], E[i])
-    ax.set_xlim(-0.5, 0.5)
-    ax.set_ylim(-0.5, 0.5)
-# plot_sigma(ax, sigma_history[60][i], E[i])
-# plot_sigma(ax, sigma_history[100][i], E[i])
-# %%
-pullback(sigma_history[7][2], forward_transformation(-E[2]))
+    print(pullback(sigma_history[j][0], forward_transformation(-E[0])))
+    for i in range(len(E)):
+        plot_sigma_at(ax, sigma_history[j][i], E[i])
+    ax.set_xlim(0, 1)
+    ax.set_ylim(0, 1)
+    ax.set_aspect('equal')
 # %%
