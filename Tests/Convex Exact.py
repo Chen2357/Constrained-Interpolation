@@ -99,12 +99,20 @@ disk2 = ConvexSet(
     lambda x: (
         x @ np.diag([2, 0.5]), np.repeat(np.diag([2, 0.5])[np.newaxis], len(x), axis=0)),
     lambda x: (
-        x @ np.diag([1/2, 2]), np.repeat(np.diag([1/2, 2])[np.newaxis], len(x), axis=0))
+        x @ np.diag([0.5, 2]), np.repeat(np.diag([0.5, 2])[np.newaxis], len(x), axis=0))
+)
+
+disk3 = ConvexSet(
+    lambda x: (
+        x @ np.diag([0.5, 2]), np.repeat(np.diag([0.5, 2])[np.newaxis], len(x), axis=0)),
+    lambda x: (
+        x @ np.diag([2, 0.5]), np.repeat(np.diag([2, 0.5])[np.newaxis], len(x), axis=0))
 )
 
 fig, ax = plt.subplots()
 disk1.plot(ax, alpha=0.5)
 disk2.plot(ax, alpha=0.5)
-disk1.intersection(disk2).plot(ax, alpha=0.5)
+disk3.plot(ax, alpha=0.5)
+disk2.intersection(disk3).sum(disk1).plot(ax, alpha=0.5)
 ax.set_aspect('equal')
 # %%
