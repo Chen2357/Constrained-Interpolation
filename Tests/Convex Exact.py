@@ -5,85 +5,108 @@ from ipywidgets.widgets import interact
 from matplotlib.axes import Axes
 
 # %%
-def to_covector_to_vector_func(ellipse: np.ndarray):
-    return lambda x: (x @ ellipse)
+def _gradient_descent_inverse(func, step=0.01, tol=1e-3):
+    def result(y):
+        x = y
 
-def sum(covector_to_vector_func1, covector_to_vector_func2):
-    def result_func(x):
-        vector1 = covector_to_vector_func1(x)
-        vector2 = covector_to_vector_func2(x)
-        length1 = np.sqrt(np.sum(x * vector1, axis=1))[:,None]
-        length2 = np.sqrt(np.sum(x * vector2, axis=1))[:,None]
+        # REVIEW: should we set a maximum number of iterations?
+        for _ in range(100):
+            value, gradient = func(x)
+            diff = value - y
+            loss = np.sum(diff**2)
+            if loss < tol:
+                break
+            x = x - step * np.einsum("ij,ijk->ik", diff, gradient)
 
-        vectors = vector1 / length1 + vector2 / length2
+        return (x, np.linalg.inv(gradient))
 
-        return vectors * np.sum(x * vectors, axis=1)[:,None]
+    return result
 
-    return result_func
 
-def approximate_polygon(covector_to_vector_func, n: int):
-    angles = np.linspace(0, 2*np.pi, n)
-    covectors = np.array([np.cos(angles), np.sin(angles)]).T
-    vectors = covector_to_vector_func(covectors)
-    return vectors / np.sqrt(np.sum(covectors * vectors, axis=1))[:,None]
+class ConvexSet:
+    def __init__(self, boundary, inverse_boundary=None):
+        """
+        boundary: (np.ndarray) -> (np.ndarray, np.ndarray)
 
-def plot_convex_set(ax: Axes, covector_to_vector_func, color=None):
-    n = 1000
-    points = approximate_polygon(covector_to_vector_func, n)
-    if color is not None:
-        ax.fill(points[:,0], points[:,1], alpha=0.5, color=color)
-    else:
-        ax.fill(points[:,0], points[:,1], alpha=0.5)
+        boundary maps vectors to covectors and gradients
+        """
+        self.boundary = boundary
+
+        if inverse_boundary is None:
+            self.inverse_boundary = _gradient_descent_inverse(self.boundary)
+        else:
+            self.inverse_boundary = inverse_boundary
+
+    def intersection(self, other: 'ConvexSet'):
+        def result(x):
+            covector1, gradient1 = self.boundary(x)
+            covector2, gradient2 = other.boundary(x)
+            length1 = np.sqrt(np.sum(covector1 * x, axis=1))
+            length2 = np.sqrt(np.sum(covector2 * x, axis=1))
+
+            return (
+                np.where((length1 > length2)[:, np.newaxis], covector1, covector2),
+                np.where((length1 > length2)[:, np.newaxis, np.newaxis], gradient1, gradient2)
+            )
+
+        return ConvexSet(result)
+
+    def sum(self, other: 'ConvexSet'):
+        def result_inverse(x):
+            vector1, inverse_gradient1 = self.inverse_boundary(x)
+            vector2, inverse_gradient2 = other.inverse_boundary(x)
+            length1 = np.sqrt(np.sum(x * vector1, axis=1))
+            length2 = np.sqrt(np.sum(x * vector2, axis=1))
+
+            vectors = vector1 / length1[:, np.newaxis] + vector2 / length2[:, np.newaxis]
+
+            result = vectors * np.sum(x * vectors, axis=1)[:, np.newaxis]
+
+            vector_grad = \
+                inverse_gradient1 / length1[:, np.newaxis, np.newaxis] \
+                + inverse_gradient2 / length2[:, np.newaxis, np.newaxis] \
+                - vector1[:, :, np.newaxis] * vector1[:, np.newaxis,
+                                                      :] \
+                / (2 * length1**3)[:, np.newaxis, np.newaxis] \
+                - vector2[:, :, np.newaxis] * vector2[:, np.newaxis,
+                                                      :] \
+                / (2 * length2**3)[:, np.newaxis, np.newaxis]
+
+            inverse_gradient = \
+                vector_grad * np.sum(x * vectors, axis=1)[:, np.newaxis, np.newaxis] \
+                + vectors[:, :, np.newaxis] * vectors[:, np.newaxis, :] \
+                + vectors[:, :, np.newaxis] * x[:, np.newaxis, :] @ vector_grad
+
+            return (result, inverse_gradient)
+
+        return ConvexSet(_gradient_descent_inverse(result_inverse), result_inverse)
+
+    def plot(self, ax: Axes, n=1000, **kwargs):
+        angles = np.linspace(0, 2*np.pi, n)
+        directions = np.array([np.cos(angles), np.sin(angles)]).T
+        length = np.sqrt(
+            np.sum(directions * self.boundary(directions)[0], axis=1))
+        points = directions / length[:, np.newaxis]
+
+        ax.fill(points[:, 0], points[:, 1], **kwargs)
+
 
 # %%
-# A = np.array([[2, 0], [0, 1]])
-B = np.array([[1, 0], [0, 1]])
-# A_func = to_covector_to_vector_func(A)
-A_func = lambda x: np.sign(x) * np.sum(np.abs(x), axis=1)[:,None]
-B_func = to_covector_to_vector_func(B)
-sum_AB_func = sum(A_func, B_func)
+disk1 = ConvexSet(
+    lambda x: (x, np.repeat(np.eye(2)[np.newaxis], len(x), axis=0)),
+    lambda x: (x, np.repeat(np.eye(2)[np.newaxis], len(x), axis=0))
+)
+
+disk2 = ConvexSet(
+    lambda x: (
+        x @ np.diag([2, 0.5]), np.repeat(np.diag([2, 0.5])[np.newaxis], len(x), axis=0)),
+    lambda x: (
+        x @ np.diag([1/2, 2]), np.repeat(np.diag([1/2, 2])[np.newaxis], len(x), axis=0))
+)
+
 fig, ax = plt.subplots()
-plot_convex_set(ax, A_func)
-plot_convex_set(ax, B_func)
-plot_convex_set(ax, sum_AB_func, 'g')
-
-# %%
-def to_vector_to_covector_func(dual_ellipse: np.ndarray):
-    return lambda x: (x @ dual_ellipse)
-
-def intersection(vector_to_covector_func1, vector_to_covector_func2):
-    def result_func(x):
-        covector1 = vector_to_covector_func1(x)
-        covector2 = vector_to_covector_func2(x)
-        length1 = np.sqrt(np.sum(covector1 * x, axis=1))[:,None]
-        length2 = np.sqrt(np.sum(covector2 * x, axis=1))[:,None]
-
-        return np.where(length1 > length2, covector1, covector2)
-
-    return result_func
-
-def approximate_dual_polygon(vector_to_covector_func, n: int):
-    angles = np.linspace(0, 2*np.pi, n)
-    vectors = np.array([np.cos(angles), np.sin(angles)]).T
-    return vectors / np.sqrt(np.sum(vector_to_covector_func(vectors) * vectors, axis=1))[:,None]
-
-def plot_dual_convex_set(ax: Axes, vector_to_covector_func, color=None):
-    n = 1000
-    points = approximate_dual_polygon(vector_to_covector_func, n)
-    if color is not None:
-        ax.fill(points[:,0], points[:,1], alpha=0.5, color=color)
-    else:
-        ax.fill(points[:,0], points[:,1], alpha=0.5)
-# %%
-# A = np.array([[2, 0], [0, 1]])
-B = np.array([[1.5, 0], [0, 2]])
-# A_func = to_vector_to_covector_func(A)
-A_func = lambda x: np.sign(x) * np.sum(np.abs(x), axis=1)[:,None]
-B_func = to_vector_to_covector_func(B)
-intersection_AB_func = intersection(A_func, B_func)
-fig, ax = plt.subplots()
-plot_dual_convex_set(ax, A_func)
-plot_dual_convex_set(ax, B_func)
-plot_dual_convex_set(ax, intersection_AB_func)
+disk1.plot(ax, alpha=0.5)
+disk2.plot(ax, alpha=0.5)
+disk1.intersection(disk2).plot(ax, alpha=0.5)
 ax.set_aspect('equal')
 # %%
