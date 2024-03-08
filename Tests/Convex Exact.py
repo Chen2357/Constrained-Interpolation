@@ -65,11 +65,9 @@ class ConvexSet:
             vector_grad = \
                 inverse_gradient1 / length1[:, np.newaxis, np.newaxis] \
                 + inverse_gradient2 / length2[:, np.newaxis, np.newaxis] \
-                - vector1[:, :, np.newaxis] * vector1[:, np.newaxis,
-                                                      :] \
+                - vector1[:, :, np.newaxis] * vector1[:, np.newaxis, :] \
                 / (2 * length1**3)[:, np.newaxis, np.newaxis] \
-                - vector2[:, :, np.newaxis] * vector2[:, np.newaxis,
-                                                      :] \
+                - vector2[:, :, np.newaxis] * vector2[:, np.newaxis, :] \
                 / (2 * length2**3)[:, np.newaxis, np.newaxis]
 
             inverse_gradient = \
