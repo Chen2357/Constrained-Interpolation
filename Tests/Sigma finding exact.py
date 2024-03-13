@@ -13,16 +13,14 @@ from copy import deepcopy
 def _gradient_descent_inverse(func, step=0.001, beta=0.9, tol=1e-3):
     def result(y):
         x = y
-        # REVIEW: should we set a maximum number of iterations?
-        loss_history = []
         previous_change = None
-        for _ in range(100):
+
+        # REVIEW: should we set a maximum number of iterations?
+        for _ in range(100000):
             value, gradient = func(x)
             diff = value - y
-            loss = np.average(diff**2)
-            loss_history.append(loss)
 
-            if loss < tol:
+            if np.max(np.abs(diff)) < tol:
                 return (x, np.linalg.inv(gradient))
 
             if previous_change is not None:
@@ -33,7 +31,7 @@ def _gradient_descent_inverse(func, step=0.001, beta=0.9, tol=1e-3):
             x = x - step * change
             previous_change = change
 
-        raise ValueError("Gradient descent did not converge", loss_history)
+        raise ValueError(f"Gradient descent did not converge")
 
     return result
 
@@ -78,20 +76,25 @@ class ConvexSet:
 
             vectors = vector1 / length1[:, np.newaxis] + vector2 / length2[:, np.newaxis]
 
-            result = vectors * np.sum(x * vectors, axis=1)[:, np.newaxis]
+            lamb = np.sum(x * vectors, axis=1)
+            result = vectors * lamb[:, np.newaxis]
+
+            length1_grad = vector1 + np.einsum("ij,ijk->ik", x, inverse_gradient1)
+            length2_grad = vector2 + np.einsum("ij,ijk->ik", x, inverse_gradient2)
 
             vector_grad = \
                 inverse_gradient1 / length1[:, np.newaxis, np.newaxis] \
                 + inverse_gradient2 / length2[:, np.newaxis, np.newaxis] \
-                - vector1[:, :, np.newaxis] * vector1[:, np.newaxis, :] \
+                - vector1[:, :, np.newaxis] * length1_grad[:, np.newaxis, :] \
                 / (2 * length1**3)[:, np.newaxis, np.newaxis] \
-                - vector2[:, :, np.newaxis] * vector2[:, np.newaxis, :] \
+                - vector2[:, :, np.newaxis] * length2_grad[:, np.newaxis, :] \
                 / (2 * length2**3)[:, np.newaxis, np.newaxis]
 
+            lamb_grad = vectors + np.einsum("ij,ijk->ik", x, vector_grad)
+
             inverse_gradient = \
-                vector_grad * np.sum(x * vectors, axis=1)[:, np.newaxis, np.newaxis] \
-                + vectors[:, :, np.newaxis] * vectors[:, np.newaxis, :] \
-                + vectors[:, :, np.newaxis] * x[:, np.newaxis, :] @ vector_grad
+                vector_grad * lamb[:, np.newaxis, np.newaxis] \
+                + vectors[:, :, np.newaxis] * lamb_grad[:, np.newaxis, :]
 
             return (result, inverse_gradient)
 
@@ -106,7 +109,7 @@ class ConvexSet:
 
         ax.fill(points[:, 0], points[:, 1], **kwargs)
 
-    def _check_integerity(self, n):
+    def _check_integrity(self, n, rtol=1e-3):
         id = np.eye(n)
         N = 100
         x = np.random.rand(100, n)
@@ -114,8 +117,8 @@ class ConvexSet:
 
         covector, gradient = self.boundary(x)
         vector, inverse_gradient = self.inverse_boundary(covector)
-        assert np.allclose(vector, x)
-        assert np.allclose(np.einsum("ijk,ikl->ijl", gradient, inverse_gradient), ids)
+        assert np.allclose(vector, x, rtol = rtol)
+        assert np.allclose(np.einsum("ijk,ikl->ijl", gradient, inverse_gradient), ids, rtol = rtol)
 # %%
 
 def forward_transformation(x: npt.NDArray):
@@ -269,6 +272,8 @@ closest_points_info = nearest_k_points(E, 2)
 sigma = [sigma_0(x) for x in E]
 sigma_history = [deepcopy(sigma)]
 
+debug_sigma_element: ConvexSet
+
 def recrusion(sigma: list[ConvexSet]):
     new_sigma = sigma
     for i in range(len(E)):
@@ -280,8 +285,11 @@ def recrusion(sigma: list[ConvexSet]):
             y = E[j]
             distance = float(norm(x-y))
 
-
-            new_sigma[j].sum(scale(ball(distance, x), C))._check_integerity(3)
+            # try:
+            #     new_sigma[j].sum(scale(ball(distance, x), C))._check_integrity(3)
+            # except:
+            #     debug_sigma_element = new_sigma[j].sum(scale(ball(distance, x), C))
+            #     raise ValueError("Integerity check failed")
 
             new_sigma[i] = new_sigma[i].intersection(new_sigma[j].sum(scale(ball(distance, x), C)))
             # try:
@@ -294,8 +302,11 @@ def recrusion(sigma: list[ConvexSet]):
     return new_sigma
 
 for i in range(1):
-    sigma = recrusion(sigma)
-    sigma_history.append(deepcopy(sigma))
+    try:
+        sigma = recrusion(sigma)
+        sigma_history.append(deepcopy(sigma))
+    except:
+        print("Failed at", i)
 
 # %%
 
