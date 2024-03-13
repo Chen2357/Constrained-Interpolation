@@ -13,8 +13,7 @@ def _gradient_descent_inverse(func, step=0.01, tol=1e-3):
         for _ in range(100):
             value, gradient = func(x)
             diff = value - y
-            loss = np.sum(diff**2)
-            if loss < tol:
+            if np.max(np.abs(diff)) < tol:
                 break
             x = x - step * np.einsum("ij,ijk->ik", diff, gradient)
 
@@ -60,20 +59,25 @@ class ConvexSet:
 
             vectors = vector1 / length1[:, np.newaxis] + vector2 / length2[:, np.newaxis]
 
-            result = vectors * np.sum(x * vectors, axis=1)[:, np.newaxis]
+            lamb = np.sum(x * vectors, axis=1)
+            result = vectors * lamb[:, np.newaxis]
+
+            length1_grad = vector1 + np.einsum("ij,ijk->ik", x, inverse_gradient1)
+            length2_grad = vector2 + np.einsum("ij,ijk->ik", x, inverse_gradient2)
 
             vector_grad = \
                 inverse_gradient1 / length1[:, np.newaxis, np.newaxis] \
                 + inverse_gradient2 / length2[:, np.newaxis, np.newaxis] \
-                - vector1[:, :, np.newaxis] * vector1[:, np.newaxis, :] \
+                - vector1[:, :, np.newaxis] * length1_grad[:, np.newaxis, :] \
                 / (2 * length1**3)[:, np.newaxis, np.newaxis] \
-                - vector2[:, :, np.newaxis] * vector2[:, np.newaxis, :] \
+                - vector2[:, :, np.newaxis] * length2_grad[:, np.newaxis, :] \
                 / (2 * length2**3)[:, np.newaxis, np.newaxis]
 
+            lamb_grad = vectors + np.einsum("ij,ijk->ik", x, vector_grad)
+
             inverse_gradient = \
-                vector_grad * np.sum(x * vectors, axis=1)[:, np.newaxis, np.newaxis] \
-                + vectors[:, :, np.newaxis] * vectors[:, np.newaxis, :] \
-                + vectors[:, :, np.newaxis] * x[:, np.newaxis, :] @ vector_grad
+                vector_grad * lamb[:, np.newaxis, np.newaxis] \
+                + vectors[:, :, np.newaxis] * lamb_grad[:, np.newaxis, :]
 
             return (result, inverse_gradient)
 
@@ -88,7 +92,16 @@ class ConvexSet:
 
         ax.fill(points[:, 0], points[:, 1], **kwargs)
 
+    def _check_integrity(self, n, rtol=1e-3):
+        id = np.eye(n)
+        N = 100
+        x = np.random.rand(100, n)
+        ids = np.repeat(id[np.newaxis], 100, axis=0)
 
+        covector, gradient = self.boundary(x)
+        vector, inverse_gradient = self.inverse_boundary(covector)
+        assert np.allclose(vector, x, rtol = rtol)
+        assert np.allclose(np.einsum("ijk,ikl->ijl", gradient, inverse_gradient), ids, rtol = rtol)
 # %%
 disk1 = ConvexSet(
     lambda x: (x, np.repeat(np.eye(2)[np.newaxis], len(x), axis=0)),
@@ -110,6 +123,7 @@ disk3 = ConvexSet(
 )
 
 fig, ax = plt.subplots()
+ax: Axes
 disk1.plot(ax, alpha=0.5)
 disk2.plot(ax, alpha=0.5)
 disk3.plot(ax, alpha=0.5)
