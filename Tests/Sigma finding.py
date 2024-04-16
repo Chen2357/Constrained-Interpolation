@@ -1,10 +1,8 @@
 # %%
-from multiprocessing import Value
 import numpy as np
 from matplotlib.axes import Axes
 import matplotlib.pyplot as plt
 from ipywidgets.widgets import interact
-from soupsieve import closest
 
 def forward_transformation(x):
     return np.array([
@@ -18,7 +16,7 @@ def pullback(ellipsoid, forward):
 
 def ball(delta, x):
     return pullback(np.array([
-        [1/delta**2, 0, 0],
+        [1/delta**4, 0, 0],
         [0, 1/delta**2, 0],
         [0, 0, 1/delta**2]
     ]), forward_transformation(x))
@@ -37,6 +35,21 @@ def scale(ellipsoid, c):
 
 def sum(ellipsoid1, ellipsoid2):
     return np.linalg.inv(np.linalg.inv(ellipsoid1) + np.linalg.inv(ellipsoid2))
+
+def inv_john_ellipsoid(points: np.ndarray, T = 10):
+    m, n = points.shape
+    w = np.repeat(n / m, m)
+
+    for k in range(0, T-1):
+        g = np.linalg.inv(points.T @ np.diag(w) @ points)
+        w = w * np.einsum('ij,jk,ik->i', points, g, points)
+
+    return points.T @ np.diag(w) @ points
+
+def _intersection(ellipsoids, T = 10):
+    L = np.linalg.cholesky(ellipsoids)
+    points = np.concatenate(np.swapaxes(L, 1, 2))
+    return inv_john_ellipsoid(points, T)
 
 def intersection(ellipsoid1, ellipsoid2):
     return (ellipsoid1 + ellipsoid2)
@@ -97,21 +110,46 @@ def is_pos_def(x):
 C = 2
 
 dim = 2
-E = np.array([
-    [0.01, 0.9],
-    [0.01, 0.8],
-    [0.01, 0.7],
-    [0.01, 0.6],
-    [0.01, 0.5],
-    [0.01, 0.4],
-    [0.01, 0.01],
-    [0.4, 0.01],
-    [0.5, 0.01],
-    [0.6, 0.01],
-    [0.7, 0.01],
-    [0.8, 0.01],
-    [0.9, 0.01],
-])
+
+# set1 = np.array([[x, x] for x in np.linspace(0.01, 0.49, 10)])
+# set2 = np.array([[x, 1.5-x] for x in np.linspace(0.51, 0.99, 10)])
+# points = np.concatenate([set1, set2])
+
+parabola = np.array([[x, x**2] for x in np.linspace(-1, 1, 40)])
+
+set1 = parabola[20:] * 0.2
+set2 = parabola[20:] * 0.5 + np.array([0.2, 0.2])
+set3 = (parabola @ np.array([[0, 1], [-1, 0]])) * 0.035 + np.array([0.5, 0.8])
+set4 = (parabola @ np.array([[np.cos(np.pi/6), -np.sin(np.pi/6)], [np.sin(np.pi/6), np.cos(np.pi/6)]])) * 0.25 + np.array([0.75, 0.2])
+
+E = np.concatenate([set1, set2, set3, set4])
+
+# E = np.array([
+#     [0.01, 0.9],
+#     [0.01, 0.85],
+#     [0.01, 0.8],
+#     [0.01, 0.75],
+#     [0.01, 0.7],
+#     [0.01, 0.65],
+#     [0.01, 0.6],
+#     [0.01, 0.55],
+#     [0.01, 0.5],
+#     [0.01, 0.45],
+#     [0.01, 0.4],
+#     [0.01, 0.01],
+#     [0.4, 0.01],
+#     [0.45, 0.01],
+#     [0.5, 0.01],
+#     [0.55, 0.01],
+#     [0.6, 0.01],
+#     [0.65, 0.01],
+#     [0.7, 0.01],
+#     [0.75, 0.01],
+#     [0.8, 0.01],
+#     [0.85, 0.01],
+#     [0.9, 0.01],
+# ])
+# E = points
 # E = np.random.rand(10, 2)
 
 inspection_index = 1
@@ -121,13 +159,12 @@ closest_points_info = nearest_k_points(E, 2)
 sigma = np.array([sigma_0(x) for x in E])
 sigma_history = [sigma.copy()]
 
-artifical_expand = 1.5
-artifical_shrink = 0.5
-
 def recrusion(sigma):
     new_sigma = sigma
     for i in range(len(E)):
         x = E[i]
+
+        intersectands = [new_sigma[i]]
 
         for j in range(len(E)):
             if i == j:
@@ -135,43 +172,16 @@ def recrusion(sigma):
             y = E[j]
             distance = norm(x-y)
 
-            new_sigma[i] = intersection(new_sigma[i], sum(sigma[j], scale(ball(distance, x), C)))
+            intersectands.append(sum(new_sigma[j], scale(ball(distance, x), C)))
 
-        for j in closest_points_info[i]:
-            closest_point = E[j]
-
-            closest_point_unit_direction = (closest_point - x) / np.linalg.norm(closest_point - x, ord=2)
-
-            projection = np.outer(closest_point_unit_direction, closest_point_unit_direction)
-
-            shrink = 1/np.sqrt(artifical_expand) * (np.eye(dim) - projection) + 1/np.sqrt(artifical_shrink) * projection
-
-            shrink = np.block([
-                [1, np.zeros((1, dim))],
-                [np.zeros((dim, 1)), shrink]
-            ])
-
-            new_sigma[i] = pullback(shrink @ pullback(new_sigma[i], forward_transformation(-x)) @ shrink, forward_transformation(x))
+        new_sigma[i] = _intersection(intersectands)
 
     return new_sigma
 
-for i in range(10):
+for i in range(6):
     sigma = recrusion(sigma)
     sigma_history.append(sigma.copy())
-# %%
-# sigma_history = np.array(sigma_history)
-# scale = 1/np.linalg.det(sigma_history[:,0])
 
-# j = 0
-# size = np.zeros(len(sigma_history))
-
-# for i in range(len(sigma_history)):
-#     size[i] = 1/np.linalg.det(pullback(sigma_history[i][j], forward_transformation(-E[j]))[1:,1:])
-
-# fig, ax = plt.subplots()
-# ax.plot(np.arange(1, 100), size[:99])
-# ax.set_yscale('log')
-# ax.set_xscale('log')
 # %%
 def plot_sigma_at(ax, sigma, x):
     pullback_sigma = pullback(sigma, forward_transformation(-x))
@@ -191,9 +201,11 @@ def plot_sigma_at(ax, sigma, x):
 @interact(j=(0, len(sigma_history)-1))
 def plot_at(j):
     fig, ax = plt.subplots()
+    ax: Axes
+    ax.plot(E[:,0], E[:,1], 'x')
     print(pullback(sigma_history[j][0], forward_transformation(-E[0])))
     for i in range(len(E)):
-        plot_sigma_at(ax, sigma_history[j][i], E[i])
+        plot_sigma_at(ax, sigma_history[j][i] * 20, E[i])
     ax.set_xlim(0, 1)
     ax.set_ylim(0, 1)
     ax.set_aspect('equal')
