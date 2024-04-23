@@ -208,7 +208,8 @@ def assign_is_CZ(root: wit.Hypercube, a1, a2):
         angle = ref_axis_angle(points, square.width, a1, a2)
 
         square.ref_axis_angle = angle
-        square.is_CZ = (square.parent is not None) and (square.parent.ref_axis_angle is None) and (angle is not None)
+        square.is_CZ = angle is not None
+        square.CZ_generation = 0 if angle is None else (1 if square.parent is None else square.parent.CZ_generation + 1)
 
         for child in square.children:
             if child is not None:
@@ -216,37 +217,91 @@ def assign_is_CZ(root: wit.Hypercube, a1, a2):
 
 # %% Testing
 
-E = np.array([
-    [0.01, 0.9],
-    [0.01, 0.8],
-    [0.01, 0.7],
-    [0.01, 0.6],
-    [0.01, 0.5],
-    [0.01, 0.4],
-    [0.01, 0.01],
-    [0.4, 0.01],
-    [0.5, 0.01],
-    [0.6, 0.01],
-    [0.7, 0.01],
-    [0.8, 0.01],
-    [0.9, 0.01],
-])
+# E = np.array([
+#     [0.01, 0.9],
+#     [0.01, 0.8],
+#     [0.01, 0.7],
+#     [0.01, 0.6],
+#     [0.01, 0.5],
+#     [0.01, 0.4],
+#     [0.01, 0.01],
+#     [0.4, 0.01],
+#     [0.5, 0.01],
+#     [0.6, 0.01],
+#     [0.7, 0.01],
+#     [0.8, 0.01],
+#     [0.9, 0.01],
+# ])
+np.random.seed(25)
+E = sample_points(50, 'random')
 
-root = approximate_CZ(E)
-assign_is_CZ(root, 1, 1)
+a1 = 1
+a2 = 1
+root = approximate_CZ(E, 30)
+assign_is_CZ(root, a1, a2)
 
+# %%
 def plot(self: wit.Hypercube, ax: Axes, edgecolor='k', facecolor=None, alpha=0.5):
-    plt.scatter(self.points[:,0], self.points[:,1], marker = "x")
+    plt.scatter(self.points[:,0], self.points[:,1], marker = "x", color = 'b')
     pc = PatchCollection(
         [Rectangle(tuple[float, float](cube.pos), cube.width, cube.width) for cube in self.leaves],
         edgecolor=edgecolor,
-        facecolor=['b' if cube.is_CZ else 'r' for cube in self.leaves],
-        alpha=alpha
+        facecolor=[(('blue', cube.CZ_generation/10) if cube.is_CZ else ('red', 0.5)) for cube in self.leaves]
+        # alpha=alpha
+        # alpha=[(0.5 if cube.CZ_generation == 0 else cube.CZ_generation/10) for cube in self.leaves]
     )
+    # print(['b' if cube.is_CZ else 'r' for cube in self.leaves])
+    print(np.max([((cube.CZ_generation/10) if cube.is_CZ else (0.5)) for cube in self.leaves]))
+    print(np.all([cube.is_CZ for cube in self.leaves]))
     ax.add_collection(pc)
     return
 
 fig, ax = plt.subplots()
+ax.set_aspect('equal')
+ax.set_xlim(0.25, 0.35)
+ax.set_ylim(0.45, 0.55)
 root.plot(ax)
 plot(root, ax)
 # %%
+
+actual_CZ = wit.Hypercube(np.array([0, 0]), 1, E)
+q = queue.Queue()
+
+q.put(actual_CZ)
+while q.qsize() != 0:
+    cube: wit.Hypercube = q.get()
+    points = actual_CZ.search_in(cube.dialated(3))
+    angle = ref_axis_angle(points, cube.width, a1, a2)
+
+    cube.ref_axis_angle = angle
+
+    if angle is not None: continue
+
+    cube.subdivide()
+    for child in cube.children:
+        q.put(child)
+
+fig, ax = plt.subplots()
+ax.set_aspect('equal')
+ax.set_xlim(0, 1)
+ax.set_ylim(0, 1)
+actual_CZ.plot(ax)
+# %%
+
+# %% Loop
+
+# store = []
+# for seed in range(100):
+#     np.random.seed(seed)
+#     E = sample_points(50, 'random')
+
+#     a1 = 1
+#     a2 = 1
+#     root = approximate_CZ(E, 10)
+#     assign_is_CZ(root, a1, a2)
+
+#     info = (seed, np.max([((cube.CZ_generation/10) if cube.is_CZ else (0.5)) for cube in root.leaves]), np.all([cube.is_CZ for cube in root.leaves]))
+
+#     store.append(info)
+#     print(info[0], info[1], info[2])
+
