@@ -3,7 +3,7 @@ import numpy.typing as npt
 from .Convex import _pullback, _forward_transformation, scale, sum, _inv_john_ellipsoid, intersection 
 from .Hypercube import Hypercube
 from .Utility import asvoid, find_index
-
+import queue
 
 class CZ_Decomposition:
     def __init__(self, root: Hypercube, a = 30, thickness = 0.001, N = 6, T = 10):
@@ -65,7 +65,7 @@ class CZ_Decomposition:
             [0, 0, 1]
         ]), _forward_transformation(x))
 
-    def _ball(delta, x):
+    def _ball(self, delta, x):
         return _pullback(np.array([
             [1/delta**4, 0, 0],
             [0, 1/delta**2, 0],

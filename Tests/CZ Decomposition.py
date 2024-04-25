@@ -232,12 +232,12 @@ def assign_is_CZ(root: wit.Hypercube, a1, a2):
 #     [0.8, 0.01],
 #     [0.9, 0.01],
 # ])
-np.random.seed(25)
-E = sample_points(50, 'random')
+np.random.seed(0)
+E = sample_points(10, 'clusters')
 
 a1 = 1
 a2 = 1
-root = approximate_CZ(E, 30)
+root = approximate_CZ(E, 10)
 assign_is_CZ(root, a1, a2)
 
 # %%
@@ -258,8 +258,8 @@ def plot(self: wit.Hypercube, ax: Axes, edgecolor='k', facecolor=None, alpha=0.5
 
 fig, ax = plt.subplots()
 ax.set_aspect('equal')
-ax.set_xlim(0.25, 0.35)
-ax.set_ylim(0.45, 0.55)
+ax.set_xlim(0.1, 0.19)
+ax.set_ylim(0.1, 0.19)
 root.plot(ax)
 plot(root, ax)
 # %%
@@ -293,7 +293,7 @@ actual_CZ.plot(ax)
 # store = []
 # for seed in range(100):
 #     np.random.seed(seed)
-#     E = sample_points(50, 'random')
+#     E = sample_points(10, 'clusters')
 
 #     a1 = 1
 #     a2 = 1
@@ -305,3 +305,5 @@ actual_CZ.plot(ax)
 #     store.append(info)
 #     print(info[0], info[1], info[2])
 
+
+# %%
