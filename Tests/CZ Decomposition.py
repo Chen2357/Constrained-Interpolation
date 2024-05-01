@@ -258,8 +258,8 @@ def plot(self: wit.Hypercube, ax: Axes, edgecolor='k', facecolor=None, alpha=0.5
 
 fig, ax = plt.subplots()
 ax.set_aspect('equal')
-ax.set_xlim(0.1, 0.19)
-ax.set_ylim(0.1, 0.19)
+ax.set_xlim(0.1, 0.3)
+ax.set_ylim(0.1, 0.3)
 root.plot(ax)
 plot(root, ax)
 # %%
@@ -283,12 +283,12 @@ while q.qsize() != 0:
 
 fig, ax = plt.subplots()
 ax.set_aspect('equal')
-ax.set_xlim(0, 1)
-ax.set_ylim(0, 1)
+ax.set_xlim(0.1, 0.3)
+ax.set_ylim(0.1, 0.3)
 actual_CZ.plot(ax)
 # %%
 
-# %% Loop
+#%% Loop
 
 # store = []
 # for seed in range(100):

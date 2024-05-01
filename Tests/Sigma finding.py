@@ -47,9 +47,11 @@ def inv_john_ellipsoid(points: np.ndarray, T = 10):
     return points.T @ np.diag(w) @ points
 
 def _intersection(ellipsoids, T = 10):
-    L = np.linalg.cholesky(ellipsoids)
+    # L = np.linalg.cholesky(ellipsoids)
+    eigenvalues, eigenvectors = np.linalg.eig(ellipsoids)
+    L = np.einsum("ij,ijk->ikj", np.sqrt(eigenvalues), eigenvectors)
     points = np.concatenate(np.swapaxes(L, 1, 2))
-    return inv_john_ellipsoid(points, T)
+    return scale(inv_john_ellipsoid(points, T), 1)
 
 def intersection(ellipsoid1, ellipsoid2):
     return (ellipsoid1 + ellipsoid2)
@@ -107,7 +109,7 @@ def is_pos_def(x):
 #     the_function = np.array([0, 5*np.pi/270, 0])
 #     return the_function @ pullback(sigma, forward_transformation(-x)) @ the_function < 1
 
-C = 2
+C = 0.5
 
 dim = 2
 
@@ -117,12 +119,16 @@ dim = 2
 
 parabola = np.array([[x, x**2] for x in np.linspace(-1, 1, 40)])
 
-set1 = parabola[20:] * 0.2
-set2 = parabola[20:] * 0.5 + np.array([0.2, 0.2])
-set3 = (parabola @ np.array([[0, 1], [-1, 0]])) * 0.035 + np.array([0.5, 0.8])
-set4 = (parabola @ np.array([[np.cos(np.pi/6), -np.sin(np.pi/6)], [np.sin(np.pi/6), np.cos(np.pi/6)]])) * 0.25 + np.array([0.75, 0.2])
+# set1 = parabola[20:] * 0.2
+# set2 = parabola[20:] * 0.5 + np.array([0.2, 0.2])
+# set3 = (parabola @ np.array([[0, 1], [-1, 0]])) * 0.035 + np.array([0.5, 0.8])
+# set4 = (parabola @ np.array([[np.cos(np.pi/6), -np.sin(np.pi/6)], [np.sin(np.pi/6), np.cos(np.pi/6)]])) * 0.25 + np.array([0.75, 0.2])
 
-E = np.concatenate([set1, set2, set3, set4])
+E = np.array([[0.15488135, 0.17151894],
+       [0.16027634, 0.15448832],
+       [0.14236548, 0.16458941]])
+
+# E = np.concatenate([set1, set2, set3, set4])
 
 # E = np.array([
 #     [0.01, 0.9],
@@ -159,7 +165,7 @@ closest_points_info = nearest_k_points(E, 2)
 sigma = np.array([sigma_0(x) for x in E])
 sigma_history = [sigma.copy()]
 
-def recrusion(sigma):
+def recursion(sigma):
     new_sigma = sigma
     for i in range(len(E)):
         x = E[i]
@@ -178,8 +184,8 @@ def recrusion(sigma):
 
     return new_sigma
 
-for i in range(6):
-    sigma = recrusion(sigma)
+for i in range(4):
+    sigma = recursion(sigma)
     sigma_history.append(sigma.copy())
 
 # %%
@@ -203,10 +209,10 @@ def plot_at(j):
     fig, ax = plt.subplots()
     ax: Axes
     ax.plot(E[:,0], E[:,1], 'x')
-    print(pullback(sigma_history[j][0], forward_transformation(-E[0])))
+    print(np.linalg.det(pullback(sigma_history[j][0], forward_transformation(-E[0]))))
     for i in range(len(E)):
         plot_sigma_at(ax, sigma_history[j][i] * 20, E[i])
-    ax.set_xlim(0, 1)
-    ax.set_ylim(0, 1)
+    ax.set_xlim(0.1, 0.3)
+    ax.set_ylim(0.1, 0.3)
     ax.set_aspect('equal')
 # %%
