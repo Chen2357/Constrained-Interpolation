@@ -145,25 +145,6 @@ class Hypercube:
                     q.put(child)
         return leaves
 
-    def plot(self, ax: Axes, edgecolor='k', facecolor=None, alpha=0.5):
-        if self.dimension == 1:
-            plt.scatter([cube.pointed_jet[0] for cube in self.leaves], [cube.pointed_jet[1] for cube in self.leaves], marker = "x")
-            plt.vlines([cube.pos[0] for cube in self.leaves], 0, 1)
-            return
-
-        if self.dimension == 2:
-            plt.scatter(self.points[:,0], self.points[:,1], marker = "x")
-            pc = PatchCollection(
-                [Rectangle(tuple[float, float](cube.pos), cube.width, cube.width) for cube in self.leaves],
-                edgecolor=edgecolor,
-                facecolor=facecolor,
-                alpha=alpha
-            )
-            ax.add_collection(pc)
-            return
-
-        raise ValueError("Dimension must be 1 or 2 to use plot.")
-
     def well_separated_pairs_decomposition(self, s: float):
         """Uses quadtree wih .self as root to return list of tuples of well seperated hypercubes. See [pdf] for details."""
         return well_separated_pairs(self, self, s)

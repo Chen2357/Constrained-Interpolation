@@ -240,28 +240,11 @@ a2 = 1
 root = approximate_CZ(E, 10)
 assign_is_CZ(root, a1, a2)
 
-# %%
-def plot(self: wit.Hypercube, ax: Axes, edgecolor='k', facecolor=None, alpha=0.5):
-    plt.scatter(self.points[:,0], self.points[:,1], marker = "x", color = 'b')
-    pc = PatchCollection(
-        [Rectangle(tuple[float, float](cube.pos), cube.width, cube.width) for cube in self.leaves],
-        edgecolor=edgecolor,
-        facecolor=[(('blue', cube.CZ_generation/10) if cube.is_CZ else ('red', 0.5)) for cube in self.leaves]
-        # alpha=alpha
-        # alpha=[(0.5 if cube.CZ_generation == 0 else cube.CZ_generation/10) for cube in self.leaves]
-    )
-    # print(['b' if cube.is_CZ else 'r' for cube in self.leaves])
-    print(np.max([((cube.CZ_generation/10) if cube.is_CZ else (0.5)) for cube in self.leaves]))
-    print(np.all([cube.is_CZ for cube in self.leaves]))
-    ax.add_collection(pc)
-    return
+# %% Plotting
+def fillcolor_map(cube: wit.Hypercube):
+    return f"rgba(0, 206, 250, {cube.CZ_generation / 5})" if cube.is_CZ else "rgba(255, 0, 0, 0.75)"
 
-fig, ax = plt.subplots()
-ax.set_aspect('equal')
-ax.set_xlim(0.1, 0.3)
-ax.set_ylim(0.1, 0.3)
-root.plot(ax)
-plot(root, ax)
+wit.Plotting.plot_hypercube(root, fillcolor_map=fillcolor_map, opacity=1)
 # %%
 
 actual_CZ = wit.Hypercube(np.array([0, 0]), 1, E)
@@ -281,29 +264,4 @@ while q.qsize() != 0:
     for child in cube.children:
         q.put(child)
 
-fig, ax = plt.subplots()
-ax.set_aspect('equal')
-ax.set_xlim(0.1, 0.3)
-ax.set_ylim(0.1, 0.3)
-actual_CZ.plot(ax)
-# %%
-
-#%% Loop
-
-# store = []
-# for seed in range(100):
-#     np.random.seed(seed)
-#     E = sample_points(10, 'clusters')
-
-#     a1 = 1
-#     a2 = 1
-#     root = approximate_CZ(E, 10)
-#     assign_is_CZ(root, a1, a2)
-
-#     info = (seed, np.max([((cube.CZ_generation/10) if cube.is_CZ else (0.5)) for cube in root.leaves]), np.all([cube.is_CZ for cube in root.leaves]))
-
-#     store.append(info)
-#     print(info[0], info[1], info[2])
-
-
-# %%
+wit.Plotting.plot_hypercube(actual_CZ)

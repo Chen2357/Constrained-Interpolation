@@ -4,6 +4,8 @@ import matplotlib.pyplot as plt
 from ipywidgets.widgets import interact
 from matplotlib.axes import Axes
 
+import plotly.graph_objects as go
+
 # Only for 2D convex set
 def approximate_polygon(boundary_func, n: int):
     angles = np.linspace(0, 2*np.pi, n)
@@ -29,95 +31,66 @@ def to_boundary_func(elipse: np.ndarray):
 
     return boundary_func
 
-def sum_combination(points_1, points_2):
-    result = []
-    for p in points_1:
-        for q in points_2:
-            result.append(p + q)
+def ellipse_graph_object(boundary_func, color=None):
+    n = 1000
+    points = approximate_polygon(boundary_func, n)
+    return go.Scatter(x=points[:,0], y=points[:,1], fill='toself', fillcolor=color)
 
-    return np.array(result)
+def _inv_john_ellipsoid(points: np.ndarray, T = 10):
+    m, n = points.shape
+    w = np.repeat(n / m, m)
 
+    for k in range(0, T-1):
+        g = np.linalg.inv(points.T @ np.diag(w) @ points)
+        w = w * np.einsum('ij,jk,ik->i', points, g, points)
 
-A = np.array([[1, 0], [0, 2]])
-B = np.array([[2, 1], [1, 1]])
-AB = A @ B
+    return points.T @ np.diag(w) @ points
+
+def sum(ellipsoid1, ellipsoid2):
+    return np.linalg.inv(np.linalg.inv(ellipsoid1) + np.linalg.inv(ellipsoid2))
+
+def intersection(ellipsoids, T = 20, ax: Axes | None = None, fig: go.Figure | None = None):
+    eigenvalues, eigenvectors = np.linalg.eig(ellipsoids)
+    L = np.einsum("ijk,ik->ijk", eigenvectors, np.sqrt(eigenvalues))
+    T_approx = np.einsum("ijk,ilk->ijl", L, L)
+
+    if not np.allclose(T_approx, ellipsoids):
+        raise ValueError("!!!")
+
+    points = np.concatenate(np.swapaxes(L, 1, 2))
+    if ax is not None:
+        ax.plot(points[:,0], points[:,1], 'o')
+    if fig is not None:
+        fig.add_trace(go.Scatter(x=points[:,0], y=points[:,1], mode='markers', showlegend=False))
+
+    return _inv_john_ellipsoid(points, T)
+
+# fig, ax = plt.subplots()
+fig = go.Figure()
+
+# A = np.array([[1, 0], [0, 2]])
+# B = np.array([[2, 1], [1, 1]])
+A = np.array([[ 2.13, 0], [0, 100*1.473]])
+B = np.array([[ 2.1282549, 1.72], [ 1.72, 100*1.350]])
+C = np.array([[ 2.10, -0.657 ], [-0.657 ,  100*1.429]])
+
+intersect = intersection([A, B, C])
+
 A_bound = to_boundary_func(A)
 B_bound = to_boundary_func(B)
-AB_bound = to_boundary_func(AB)
-fig, ax = plt.subplots()
-plot_convex_set(ax, A_bound)
-plot_convex_set(ax, B_bound)
-plot_convex_set(ax, AB_bound)
-# %%
+C_bound = to_boundary_func(C)
+intersect_bound = to_boundary_func(intersect)
+# inv_bound = to_boundary_func(np.linalg.inv(intersect))
+# AB_bound = to_boundary_func(AB)
+# AB_inv_bound = to_boundary_func(np.linalg.inv(AB))
 
-def add_boundary_func(boundary_func1, boundary_func2):
-    def boundary_func(directions):
-        return boundary_func1(directions) + boundary_func2(directions)
-
-    return boundary_func
-
-A = np.array([[1, 9], [9, 1000]])
-B = np.array([[100, 0], [0, 1]])
-AB = np.linalg.inv(np.linalg.inv(A) + np.linalg.inv(B))/2
-A_bound = to_boundary_func(A)
-B_bound = to_boundary_func(B)
-AB_bound = to_boundary_func(AB)
-fig, ax = plt.subplots()
-plot_convex_set(ax, A_bound)
-plot_convex_set(ax, B_bound)
-plot_convex_set(ax, AB_bound)
-
-sum_points = sum_combination(approximate_polygon(A_bound, 100), approximate_polygon(B_bound, 100))
-ax.plot(sum_points[:,0], sum_points[0:,1], "k.", alpha=0.2)
-
-for p in sum_points:
-    if p @ AB @ p > 1:
-        print("Counterexample!!!")
-# %%
-
-@interact(a=(0, 5, 0.1), b=(0, 5, 0.1), c=(0, 5, 0.1), d=(0, 5, 0.1), e=(0, 5, 0.1), f=(0, 5, 0.1))
-def plot(a, b, c, d, e, f):
-    A = np.array([[a, b], [b, c]])
-    B = np.array([[d, e], [e, f]])
-    AB = np.linalg.inv(np.linalg.inv(A) + np.linalg.inv(B))
-    A_bound = to_boundary_func(A)
-    B_bound = to_boundary_func(B)
-    AB_bound = to_boundary_func(AB)
-    fig, ax = plt.subplots()
-    plot_convex_set(ax, A_bound)
-    plot_convex_set(ax, B_bound)
-    plot_convex_set(ax, AB_bound)
-    plot_convex_set(ax, add_boundary_func(A_bound, B_bound))
-# %%
-# %%
-
-points_1 = np.array([[1, 0], [0, 1], [1, 1]])
-points_2 = np.array([[10, 0], [0, 10], [10, 10]])
-sum_combination(points_1, points_2)
-# %%
-np.argmax(sum_points[0])
-sum_points[:,0]
-# %%
-E1 = np.array([
-    [1_000_000, 400_000, 400_000],
-    [400_000, 160_001, 160_000],
-    [400_000, 160_000, 160_001]
-])
-
-E2 = np.array([
-    [6.25, 1.25, 1.25],
-    [1.25, 6.5, 0.25],
-    [1.25, 0.25, 6.5]
-])
-
-p1 = np.array([0.01009804, 0, -0.02774411])
-p2 = np.array([-0.3647, -0.06086, -0.0652])
-p12 = p1 + p2
-
-print(p1 @ E1 @ p1)
-print(p2 @ E2 @ p2)
-
-guess = np.linalg.inv(np.linalg.inv(E1) + np.linalg.inv(E2))
-print(p12 @ guess @ p12)
-print(p12 @ guess @ p12)
-# %%
+fig.add_trace(ellipse_graph_object(A_bound))
+fig.add_trace(ellipse_graph_object(B_bound))
+fig.add_trace(ellipse_graph_object(C_bound))
+fig.add_trace(ellipse_graph_object(intersect_bound))
+# fig.add_trace(ellipse_graph_object(inv_bound))
+# plot_convex_set(ax, A_bound)
+# plot_convex_set(ax, B_bound)
+# plot_convex_set(ax, C_bound)
+# plot_convex_set(ax, intersect_bound)
+# plot_convex_set(ax, inv_bound)
