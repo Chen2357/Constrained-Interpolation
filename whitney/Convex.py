@@ -23,7 +23,7 @@ def _inv_john_ellipsoid(points: npt.NDArray, T = 10):
 
     return points.T @ np.diag(w) @ points
 
-def intersection(ellipsoids: npt.NDArray, T = 10):
+def intersection(ellipsoids: npt.NDArray | list, T = 10):
     L = np.linalg.cholesky(ellipsoids)
     points = np.concatenate(np.swapaxes(L, 1, 2))
     return _inv_john_ellipsoid(points, T)

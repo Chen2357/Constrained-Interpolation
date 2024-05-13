@@ -1,6 +1,6 @@
 import numpy as np
 import numpy.typing as npt
-from .Convex import _pullback, _forward_transformation, scale, sum, _inv_john_ellipsoid, intersection 
+from .Convex import _pullback, _forward_transformation, scale, sum, _inv_john_ellipsoid, intersection
 from .Hypercube import Hypercube
 from .Utility import asvoid, find_index
 import queue
@@ -48,7 +48,7 @@ class CZ_Decomposition:
 
         while q.qsize() != 0:
             current = q.get()
-            current: wit.Hypercube
+            current: Hypercube
             if is_good(current):
                 continue
             else:
