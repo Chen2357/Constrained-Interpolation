@@ -80,7 +80,7 @@ class CZ_Decomposition:
             for i in range(len(self.points)):
                 x = self.points[i]
 
-                intersectands = [new_sigma[i]]
+                intersectands = [sigma[i]]
 
                 for j in range(len(self.points)):
                     if i == j:
@@ -88,7 +88,7 @@ class CZ_Decomposition:
                     y = self.points[j]
                     distance = np.linalg.norm(x - y, ord=2)
 
-                    intersectands.append(sum(new_sigma[j], scale(self._ball(distance, x), C)))
+                    intersectands.append(sum(sigma[j], scale(self._ball(distance, x), C)))
 
                 new_sigma[i] = intersection(intersectands)
 
