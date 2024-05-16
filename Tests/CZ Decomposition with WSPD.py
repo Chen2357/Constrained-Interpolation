@@ -1,0 +1,133 @@
+from sympy import group
+from test_module import *
+import numpy as np
+
+from scipy import spatial
+
+
+def diam_inf(points):
+    candidates = points[spatial.ConvexHull(points).vertices]
+    dist_mat = spatial.distance_matrix(candidates, candidates, p=np.inf)  # type: ignore
+    return np.sqrt(2) * np.max(dist_mat)
+
+class Data:
+    def __init__(self, root: wit.Hypercube, thickness=0.001):
+        self.root = root
+        self.thickness = thickness
+
+    @property
+    def points(self):
+        return self.root.points
+
+    def _sigma_0(self, x):
+        return wit._pullback(np.array([
+            [1/self.thickness**2, 0, 0],
+            [0, 1, 0],
+            [0, 0, 1]
+        ]), wit._forward_transformation(x))
+
+    def _ball(self, delta, x):
+        return wit._pullback(np.array([
+            [1/delta**4, 0, 0],
+            [0, 1/delta**2, 0],
+            [0, 0, 1/delta**2]
+        ]), wit._forward_transformation(x))
+
+    def _approximate_sigma(self, s=2, C=1):
+        sigma = np.array([self._sigma_0(x) for x in self.points])
+        groups, well_separated_pairs_indices = wit.build_wspd(self.points, s)
+
+        def recursion(sigma):
+            group_sigma = [
+                wit.intersection([
+                    wit.sum(
+                        sigma[j],
+                        self._ball(diam_inf(groups[i]), self.points[j])
+                    )
+                    for j in groups[i]
+                ])
+                for i in range(len(groups))
+            ]
+
+            # group_sigma_1 = [np.empty(0)] * len(groups)
+            # group_sigma_2 = [np.empty(0)] * len(groups)
+            sigma_bar = [[np.empty(0, dtype=float)] * len(groups)] * len(groups)
+
+            for j, k in well_separated_pairs_indices:
+                sigma1 = wit.sum(group_sigma[j], self._ball(diam_inf(groups[j]), self.points[groups[j][0]]))
+                sigma2 = wit.sum(group_sigma[k], self._ball(diam_inf(groups[k]), self.points[groups[k][0]]))
+
+                sigma_bar[j][k] = wit.intersection([
+                    sigma1,
+                    wit.sum(
+                        sigma2,
+                        self._ball(
+                            np.linalg.norm(self.points[groups[j][0]] - self.points[groups[k][0]], ord=np.inf),
+                            self.points[groups[j][0]])
+                    )
+                ])
+
+            # For each A in T, define sigma'(A) = intersection(sigma_bar(A, B) where (A, B) in L)
+            sigma_prime = [np.empty(0, dtype=float)] * len(groups)
+            for i in range(len(groups)):
+                intersectands = []
+                for j in range(len(groups)):
+                    if (i, j) in well_separated_pairs_indices:
+                        intersectands.append(sigma_bar[i][j])
+                sigma_prime[i] = wit.intersection(intersectands)
+
+            # For each x in E, redefine sigma(x) = simga(x) intersect intersection(sigma(A) for A in T where x in A)
+            new_sigma = [np.empty(0, dtype=float)] * len(self.points)
+            for i in range(len(self.points)):
+                intersectands = [sigma[i]]
+                for j in range(len(groups)):
+                    if i in groups[j]:
+                        intersectands.append(group_sigma[j])
+                new_sigma[i] = wit.intersection(intersectands)
+
+            return new_sigma
+
+        for _ in range(6):
+            sigma = recursion(sigma)
+
+        return np.array([wit._pullback(sigma[i], wit._forward_transformation(-self.points[i])) for i in range(len(self.points))])
+
+
+E = np.array([
+    [0.01, 0.9],
+    [0.01, 0.85],
+    [0.01, 0.8],
+    [0.01, 0.75],
+    [0.01, 0.7],
+    [0.01, 0.65],
+    [0.01, 0.6],
+    [0.01, 0.55],
+    [0.01, 0.5],
+    [0.01, 0.45],
+    [0.01, 0.4],
+    [0.01, 0.01],
+    [0.4, 0.01],
+    [0.45, 0.01],
+    [0.5, 0.01],
+    [0.55, 0.01],
+    [0.6, 0.01],
+    [0.65, 0.01],
+    [0.7, 0.01],
+    [0.75, 0.01],
+    [0.8, 0.01],
+    [0.85, 0.01],
+    [0.9, 0.01],
+])
+
+root = wit.Hypercube((0, 0), 1, E)
+Data(root)._approximate_sigma()
+
+# Assume all the lambda's are singletons (lambda = [A])
+# For each A in T, define sigma(A) = intersection(sigma(x) + B(x, diam(A)) for x in A)
+# For each (A, B) in L,
+#  Define sigma_1(A) = sigma(A) + B(x_A, diam(A))
+#  Define sigma_2(B) = sigma(B) + B(x_B, diam(B))
+# For each (A, B) in L, define sigma(A, B) = intersection(sigma_1(A), sum(sigma_2(B) + B(x_A, |x_A - x_B|)))
+# For each A in T, define sigma'(A) = intersection(sigma_bar(A, B) where (A, B) in L)
+# For each x in E, redefine sigma(x) = simga(x) intersect intersection(sigma(A) for A in T where x in A)
+

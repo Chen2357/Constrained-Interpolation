@@ -1,81 +1,68 @@
-from test_module import *
+import wspd
 import numpy as np
 
-class Data:
-    def __init__(self, root: wit.Hypercube, thickness = 0.001):
-        self.root = root
-        self.thickness = thickness
+from scipy import spatial
 
-    @property
-    def points(self):
-        return self.root.points
+def diam_inf(points):
+    if len(points) <= 2:
+        return 0
+    candidates = points[spatial.ConvexHull(points).vertices]
+    dist_mat = spatial.distance_matrix(candidates, candidates, p=np.inf)  # type: ignore
+    return np.sqrt(2) * np.max(dist_mat)
 
-    def _sigma_0(self, x):
-        return wit._pullback(np.array([
-            [1/self.thickness**2, 0, 0],
-            [0, 1, 0],
-            [0, 0, 1]
-        ]), wit._forward_transformation(x))
+points = np.array(((1, 0), (2, 1), (1, 10), (2, 9), (10,4), (11,5), (5,4), (5.5, 3.5)))
+s = 2
+n = 8
 
-    def _ball(self, delta, x):
-        return wit._pullback(np.array([
-            [1/delta**4, 0, 0],
-            [0, 1/delta**2, 0],
-            [0, 0, 1/delta**2]
-        ]), wit._forward_transformation(x))
+num_points = len(points)
+dim = len(points[0])
+wspd_points = [wspd.point(points[i]) for i in range(num_points)]  # type: ignore
 
-    def _approximate_sigma(self, C = 1):
-        sigma = np.array([self._sigma_0(x) for x in self.points])
+L = wspd.build_wspd(num_points, dim, s, wspd_points) # type: ignore
 
-        def recursion(sigma):
-            new_sigma = sigma
-            for i in range(len(self.points)):
-                x = self.points[i]
+print(L)
 
-                intersectands = [new_sigma[i]]
+big_union = []
+for A, B in L:
+    for x in A:
+        for y in B:
+            big_union.append((x, y))
+            big_union.append((y, x))
 
-                for j in range(len(self.points)):
-                    if i == j:
-                        continue
-                    y = self.points[j]
-                    distance = np.linalg.norm(x - y, ord=2)
+print("Starting (1)")
 
-                    intersectands.append(sum(new_sigma[j], wit.scale(self._ball(distance, x), C)))
+for i in range(n):
+    for j in range(n):
+        if i != j and (i, j) not in big_union:
+            print("Missing point: ", i, j)
 
-                new_sigma[i] = wit.intersection(intersectands)
+print("Done with (1)")
 
-            return new_sigma
+print("Starting (2)")
 
-        for _ in range(6):
-            sigma = recursion(sigma)
+for A, B in L:
+    for C, D in L:
+        if A != C or B != D:
+            for x in A:
+                for y in B:
+                    for z in C:
+                        for w in D:
+                            if x == z and y == w:
+                                print("Duplicate point: ", x, y)
 
-        return np.array([wit._pullback(sigma[i], wit._forward_transformation(-self.points[i])) for i in range(len(self.points))])
+print("Done with (2)")
 
-E = np.array([
-    [0.01, 0.9],
-    [0.01, 0.85],
-    [0.01, 0.8],
-    [0.01, 0.75],
-    [0.01, 0.7],
-    [0.01, 0.65],
-    [0.01, 0.6],
-    [0.01, 0.55],
-    [0.01, 0.5],
-    [0.01, 0.45],
-    [0.01, 0.4],
-    [0.01, 0.01],
-    [0.4, 0.01],
-    [0.45, 0.01],
-    [0.5, 0.01],
-    [0.55, 0.01],
-    [0.6, 0.01],
-    [0.65, 0.01],
-    [0.7, 0.01],
-    [0.75, 0.01],
-    [0.8, 0.01],
-    [0.85, 0.01],
-    [0.9, 0.01],
-])
+print("Starting (3)")
 
-root = wit.Hypercube((0, 0), 1, E)
-Data(root)._approximate_sigma()
+def diam(A):
+    return diam_inf(points[A])
+
+def dist(A, B):
+    dist_mat = spatial.distance_matrix(points[A], points[B], p=np.inf) # type: ignore
+    return np.min(dist_mat)
+
+for A, B in L:
+    if max(diam(A), diam(B)) >= s * dist(A, B):
+        print("Bad separation: ", A, B)
+
+print("Done with (3)")
