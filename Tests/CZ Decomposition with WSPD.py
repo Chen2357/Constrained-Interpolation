@@ -1,14 +1,24 @@
 from sympy import group
 from test_module import *
 import numpy as np
+import plotly.graph_objects as go
+from plotly.graph_objs import Figure
 
 from scipy import spatial
 
 
-def diam_inf(points):
-    candidates = points[spatial.ConvexHull(points).vertices]
+def _diam_inf(points):
+    try:
+        candidates = points[spatial.ConvexHull(points).vertices]
+    except:
+        return np.max(points[:, 0]) - np.min(points[:, 0]) + np.max(points[:, 1]) - np.min(points[:, 1])
+
     dist_mat = spatial.distance_matrix(candidates, candidates, p=np.inf)  # type: ignore
-    return np.sqrt(2) * np.max(dist_mat)
+    return np.max(dist_mat)
+
+
+def diam_inf(points):
+    return np.sqrt(2) * _diam_inf(points)
 
 class Data:
     def __init__(self, root: wit.Hypercube, thickness=0.001):
@@ -26,6 +36,13 @@ class Data:
             [0, 0, 1]
         ]), wit._forward_transformation(x))
 
+    def _ball_inverse(self, delta, x):
+        return wit._pullback(np.array([
+            [delta**4, 0, 0],
+            [0, delta**2, 0],
+            [0, 0, delta**2]
+        ]), wit._forward_transformation(x))
+
     def _ball(self, delta, x):
         return wit._pullback(np.array([
             [1/delta**4, 0, 0],
@@ -40,9 +57,9 @@ class Data:
         def recursion(sigma):
             group_sigma = [
                 wit.intersection([
-                    wit.sum(
+                    wit._sum_with_inverse(
                         sigma[j],
-                        self._ball(diam_inf(groups[i]), self.points[j])
+                        self._ball_inverse(diam_inf(self.points[groups[i]]), self.points[j])
                     )
                     for j in groups[i]
                 ])
@@ -54,8 +71,14 @@ class Data:
             sigma_bar = [[np.empty(0, dtype=float)] * len(groups)] * len(groups)
 
             for j, k in well_separated_pairs_indices:
-                sigma1 = wit.sum(group_sigma[j], self._ball(diam_inf(groups[j]), self.points[groups[j][0]]))
-                sigma2 = wit.sum(group_sigma[k], self._ball(diam_inf(groups[k]), self.points[groups[k][0]]))
+                sigma1 = wit._sum_with_inverse(
+                    group_sigma[j],
+                    self._ball_inverse(diam_inf(self.points[groups[j]]), self.points[groups[j][0]])
+                )
+                sigma2 = wit._sum_with_inverse(
+                    group_sigma[k],
+                    self._ball_inverse(diam_inf(self.points[groups[k]]), self.points[groups[k][0]])
+                )
 
                 sigma_bar[j][k] = wit.intersection([
                     sigma1,
@@ -72,8 +95,9 @@ class Data:
             for i in range(len(groups)):
                 intersectands = []
                 for j in range(len(groups)):
-                    if (i, j) in well_separated_pairs_indices:
+                    if [i, j] in well_separated_pairs_indices:
                         intersectands.append(sigma_bar[i][j])
+
                 sigma_prime[i] = wit.intersection(intersectands)
 
             # For each x in E, redefine sigma(x) = simga(x) intersect intersection(sigma(A) for A in T where x in A)
@@ -92,35 +116,78 @@ class Data:
 
         return np.array([wit._pullback(sigma[i], wit._forward_transformation(-self.points[i])) for i in range(len(self.points))])
 
+parabola = np.array([[x, x**2] for x in np.linspace(-1, 1, 40)])
 
-E = np.array([
-    [0.01, 0.9],
-    [0.01, 0.85],
-    [0.01, 0.8],
-    [0.01, 0.75],
-    [0.01, 0.7],
-    [0.01, 0.65],
-    [0.01, 0.6],
-    [0.01, 0.55],
-    [0.01, 0.5],
-    [0.01, 0.45],
-    [0.01, 0.4],
-    [0.01, 0.01],
-    [0.4, 0.01],
-    [0.45, 0.01],
-    [0.5, 0.01],
-    [0.55, 0.01],
-    [0.6, 0.01],
-    [0.65, 0.01],
-    [0.7, 0.01],
-    [0.75, 0.01],
-    [0.8, 0.01],
-    [0.85, 0.01],
-    [0.9, 0.01],
-])
+set1 = parabola[20:] * 0.2
+set2 = parabola[20:] * 0.5 + np.array([0.2, 0.2])
+set3 = (parabola @ np.array([[0, 1], [-1, 0]])) * 0.035 + np.array([0.5, 0.8])
+set4 = (parabola @ np.array([[np.cos(np.pi/6), -np.sin(np.pi/6)], [np.sin(np.pi/6), np.cos(np.pi/6)]])) * 0.25 + np.array([0.75, 0.2])
+E = np.concatenate([set1, set2, set3, set4])
+
+# E = np.array([
+#     [0.01, 0.9],
+#     [0.01, 0.85],
+#     [0.01, 0.8],
+#     [0.01, 0.75],
+#     [0.01, 0.7],
+#     [0.01, 0.65],
+#     [0.01, 0.6],
+#     [0.01, 0.55],
+#     [0.01, 0.5],
+#     [0.01, 0.45],
+#     [0.01, 0.4],
+#     [0.01, 0.01],
+#     [0.4, 0.01],
+#     [0.45, 0.01],
+#     [0.5, 0.01],
+#     [0.55, 0.01],
+#     [0.6, 0.01],
+#     [0.65, 0.01],
+#     [0.7, 0.01],
+#     [0.75, 0.01],
+#     [0.8, 0.01],
+#     [0.85, 0.01],
+#     [0.9, 0.01],
+# ])
 
 root = wit.Hypercube((0, 0), 1, E)
-Data(root)._approximate_sigma()
+sigma = Data(root)._approximate_sigma()
+
+# %%
+def approximate_polygon(boundary_func, n: int):
+    angles = np.linspace(0, 2*np.pi, n)
+    directions = np.array([np.cos(angles), np.sin(angles)]).T
+    points = boundary_func(directions) * directions.T
+
+    return points.T
+
+def to_boundary_func(elipse: np.ndarray):
+    def boundary_func(directions):
+        result = []
+        for direction in directions:
+            result.append(np.sqrt((direction @ direction) / (direction @ elipse @ direction)))
+        return np.array(result)
+
+    return boundary_func
+
+def plot_sigma_at(fig: Figure, sigma, x):
+    pullback_sigma = wit._pullback(sigma, wit._forward_transformation(-x))
+    n = 1000
+    points = approximate_polygon(to_boundary_func(pullback_sigma[1:,1:]), n)
+    points = points + x
+    fig.add_trace(go.Scatter(x=points[:,0], y=points[:,1], fill="toself"))
+
+fig = go.Figure()
+fig.add_trace(go.Scatter(x=E[:,0], y=E[:,1], mode='markers'))
+for i in range(len(E)):
+    plot_sigma_at(fig, sigma[i] * 20, E[i])
+
+fig.update_layout(
+    xaxis=dict(range=[0, 1]),
+    yaxis=dict(range=[0, 1])
+)
+fig.show()
+
 
 # Assume all the lambda's are singletons (lambda = [A])
 # For each A in T, define sigma(A) = intersection(sigma(x) + B(x, diam(A)) for x in A)
@@ -131,3 +198,4 @@ Data(root)._approximate_sigma()
 # For each A in T, define sigma'(A) = intersection(sigma_bar(A, B) where (A, B) in L)
 # For each x in E, redefine sigma(x) = simga(x) intersect intersection(sigma(A) for A in T where x in A)
 
+# %%

@@ -13,6 +13,9 @@ def scale(ellipsoid, c):
 def sum(ellipsoid1: npt.NDArray, ellipsoid2: npt.NDArray):
     return np.linalg.inv(np.linalg.inv(ellipsoid1) + np.linalg.inv(ellipsoid2))
 
+def _sum_with_inverse(ellipsoid1: npt.NDArray, ellipsoid2_inverse: npt.NDArray):
+    return np.linalg.inv(np.linalg.inv(ellipsoid1) + ellipsoid2_inverse)
+
 def _inv_john_ellipsoid(points: npt.NDArray, T = 10):
     m, n = points.shape
     w = np.repeat(n / m, m)

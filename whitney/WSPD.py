@@ -11,7 +11,7 @@ def build_wspd(points: np.ndarray, s: float):
 
     L = L_half + [(B, A) for A, B in L_half]
 
-    T_with_duplicates = [set(A) for tup in L_half for A in tup]
+    T_with_duplicates = [A for tup in L for A in tup]
 
     T = []
     for A in T_with_duplicates:
