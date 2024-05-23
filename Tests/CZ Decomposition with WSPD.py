@@ -5,6 +5,7 @@ import plotly.graph_objects as go
 from plotly.graph_objs import Figure
 
 from scipy import spatial
+import queue
 
 
 def _diam_inf(points):
@@ -21,7 +22,7 @@ def diam_inf(points):
     return np.sqrt(2) * _diam_inf(points)
 
 class Data:
-    def __init__(self, root: wit.Hypercube, thickness=0.001):
+    def __init__(self, root: wit.Hypercube, thickness=0.01):
         self.root = root
         self.thickness = thickness
 
@@ -50,6 +51,32 @@ class Data:
             [0, 0, 1/delta**2]
         ]), wit._forward_transformation(x))
 
+    def _CZ_decompose(self, a = 30):
+        # root = wit.Hypercube(np.array([0, 0]), 1, points)
+        sigma = self._approximate_sigma()
+
+        def indices_of_points(p):
+            return [wit.find_index(self.points, q)[0] for q in p]
+
+        def is_good(square: wit.Hypercube):
+            p = self.root.search_in(square.dialated(3))
+            i = indices_of_points(p)
+            diameters = 2 / np.sqrt(np.linalg.eig(sigma[i])[0].min(axis=-1))
+            return np.all(diameters >= a * square.width)
+
+        q = queue.Queue()
+        q.put(self.root)
+
+        while q.qsize() != 0:
+            current = q.get()
+            current: wit.Hypercube
+            if is_good(current):
+                continue
+            else:
+                current.subdivide()
+                for child in current.children:
+                    q.put(child)
+
     def _approximate_sigma(self, s=2, C=1):
         sigma = np.array([self._sigma_0(x) for x in self.points])
         groups, well_separated_pairs_indices = wit.build_wspd(self.points, s)
@@ -66,8 +93,6 @@ class Data:
                 for i in range(len(groups))
             ]
 
-            # group_sigma_1 = [np.empty(0)] * len(groups)
-            # group_sigma_2 = [np.empty(0)] * len(groups)
             sigma_bar = [[np.empty(0, dtype=float)] * len(groups)] * len(groups)
 
             for j, k in well_separated_pairs_indices:
@@ -82,11 +107,12 @@ class Data:
 
                 sigma_bar[j][k] = wit.intersection([
                     sigma1,
-                    wit.sum(
+                    wit._sum_with_inverse(
                         sigma2,
-                        self._ball(
+                        self._ball_inverse(
                             np.linalg.norm(self.points[groups[j][0]] - self.points[groups[k][0]], ord=np.inf),
-                            self.points[groups[j][0]])
+                            self.points[groups[j][0]]
+                        )
                     )
                 ])
 
@@ -106,23 +132,23 @@ class Data:
                 intersectands = [sigma[i]]
                 for j in range(len(groups)):
                     if i in groups[j]:
-                        intersectands.append(group_sigma[j])
+                        intersectands.append(sigma_prime[j])
                 new_sigma[i] = wit.intersection(intersectands)
 
             return new_sigma
 
-        for _ in range(6):
+        for _ in range(2):
             sigma = recursion(sigma)
 
         return np.array([wit._pullback(sigma[i], wit._forward_transformation(-self.points[i])) for i in range(len(self.points))])
 
-parabola = np.array([[x, x**2] for x in np.linspace(-1, 1, 40)])
+# parabola = np.array([[x, x**2] for x in np.linspace(-1, 1, 40)])
 
-set1 = parabola[20:] * 0.2
-set2 = parabola[20:] * 0.5 + np.array([0.2, 0.2])
-set3 = (parabola @ np.array([[0, 1], [-1, 0]])) * 0.035 + np.array([0.5, 0.8])
-set4 = (parabola @ np.array([[np.cos(np.pi/6), -np.sin(np.pi/6)], [np.sin(np.pi/6), np.cos(np.pi/6)]])) * 0.25 + np.array([0.75, 0.2])
-E = np.concatenate([set1, set2, set3, set4])
+# set1 = parabola[20:] * 0.2
+# set2 = parabola[20:] * 0.5 + np.array([0.2, 0.2])
+# set3 = (parabola @ np.array([[0, 1], [-1, 0]])) * 0.035 + np.array([0.5, 0.8])
+# set4 = (parabola @ np.array([[np.cos(np.pi/6), -np.sin(np.pi/6)], [np.sin(np.pi/6), np.cos(np.pi/6)]])) * 0.25 + np.array([0.75, 0.2])
+# E = np.concatenate([set1, set2, set3, set4])
 
 # E = np.array([
 #     [0.01, 0.9],
@@ -149,6 +175,11 @@ E = np.concatenate([set1, set2, set3, set4])
 #     [0.85, 0.01],
 #     [0.9, 0.01],
 # ])
+
+E = np.array([[a, 1-a] for a in np.arange(0.1, 1, 0.1)])
+np.random.shuffle(E)
+
+# E = np.random.rand(20, 2)
 
 root = wit.Hypercube((0, 0), 1, E)
 sigma = Data(root)._approximate_sigma()
@@ -177,6 +208,23 @@ def plot_sigma_at(fig: Figure, sigma, x):
     points = points + x
     fig.add_trace(go.Scatter(x=points[:,0], y=points[:,1], fill="toself"))
 
+def _plot_sigma_at(ax, sigma, x):
+    pullback_sigma = wit._pullback(sigma, wit._forward_transformation(-x))
+    n = 1000
+    points = approximate_polygon(to_boundary_func(pullback_sigma[1:,1:]), n)
+    points = points + x
+    ax.fill(points[:,0], points[:,1], alpha=0.5)
+
+# import matplotlib.pyplot as plt
+
+# fig, ax = plt.subplots()
+# ax.plot(E[:,0], E[:,1], 'x')
+# for i in range(len(E)):
+#     _plot_sigma_at(ax, sigma[i] * 20, E[i])
+# ax.set_xlim(0, 1)
+# ax.set_ylim(0, 1)
+# ax.set_aspect('equal')
+
 fig = go.Figure()
 fig.add_trace(go.Scatter(x=E[:,0], y=E[:,1], mode='markers'))
 for i in range(len(E)):
@@ -187,7 +235,6 @@ fig.update_layout(
     yaxis=dict(range=[0, 1])
 )
 fig.show()
-
 
 # Assume all the lambda's are singletons (lambda = [A])
 # For each A in T, define sigma(A) = intersection(sigma(x) + B(x, diam(A)) for x in A)
