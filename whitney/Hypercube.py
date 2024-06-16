@@ -71,14 +71,12 @@ class Hypercube:
 
     def subdivide(self):
         """Populates children attribute with 2^dimension equal sized hypercubes. Partitions points into appropriate children. See [pdf] for details."""
-        if self.dimension > 8:
-            raise RuntimeError("Dimension of Hypercube cannot be greater than 8")
 
         center = self.pos + self.width/2
         quad_info = self.points > center
 
         for i in range(2**self.dimension):
-            kernel = np.unpackbits(np.uint8(i), count=self.dimension, bitorder='little')
+            kernel = (i // 2**np.arange(self.dimension)) % 2
             # kernel[j] is j-th binary digit of i, 0th digit is unit digit
             is_point_in_quad = np.all(quad_info == kernel, axis=tuple(range(1, self.dimension)))
 
