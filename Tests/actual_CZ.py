@@ -43,16 +43,16 @@ def assign_is_CZ(root: wit.Hypercube, a1, a2):
         points = root.search_in(square.dialated(3))
         angle = ref_axis_angle(points, square.width, a1, a2)
 
-        square.ref_axis_angle = angle
-        square.is_CZ = angle is not None
-        square.CZ_generation = 0 if angle is None else (1 if square.parent is None else square.parent.CZ_generation + 1)
+        square.ref_axis_angle = angle # type: ignore
+        square.is_CZ = angle is not None # type: ignore
+        square.CZ_generation = 0 if angle is None else (1 if square.parent is None else square.parent.CZ_generation + 1) # type: ignore
 
         for child in square.children:
             if child is not None:
                 q.put(child)
 
 def CZ_comparison_fillcolor_map(cube: wit.Hypercube):
-    return f"rgba(100, 100, 100, {cube.CZ_generation / 5})" if cube.is_CZ else "rgba(255, 0, 0, 0.75)"
+    return f"rgba(100, 100, 100, {cube.CZ_generation / 5})" if cube.is_CZ else "rgba(255, 0, 0, 0.75)" # type: ignore
 
 # wit.Plotting.plot_hypercube(root, fillcolor_map=fillcolor_map, opacity=1)
 # %%
@@ -67,7 +67,7 @@ def get_actual_CZ(E, a1, a2):
         points = actual_CZ.search_in(cube.dialated(3))
         angle = ref_axis_angle(points, cube.width, a1, a2)
 
-        cube.ref_axis_angle = angle
+        cube.ref_axis_angle = angle # type: ignore
 
         if angle is not None: continue
 
