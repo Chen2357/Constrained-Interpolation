@@ -170,7 +170,7 @@ def recursion(sigma):
     for i in range(len(E)):
         x = E[i]
 
-        intersectands = [new_sigma[i]]
+        intersectands = [sigma[i]]
 
         for j in range(len(E)):
             if i == j:
