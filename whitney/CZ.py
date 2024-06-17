@@ -1,19 +1,33 @@
 import numpy as np
 import numpy.typing as npt
-from .Convex import _pullback, _forward_transformation, scale, sum, _inv_john_ellipsoid, intersection
+from .Convex import _pullback, _forward_transformation, scale, sum, _inv_john_ellipsoid, intersection, _sum_with_inverse
 from .Hypercube import Hypercube
-from .Utility import asvoid, find_index
 import queue
+from .WSPD import build_wspd
+
+
+from scipy import spatial
+
+def _diam_inf(points):
+    try:
+        candidates = points[spatial.ConvexHull(points).vertices]
+    except:
+        return np.max(points[:, 0]) - np.min(points[:, 0]) + np.max(points[:, 1]) - np.min(points[:, 1])
+
+    dist_mat = spatial.distance_matrix(candidates, candidates, p=float('inf')) # type: ignore
+    return np.sqrt(2) * np.max(dist_mat)
 
 class CZ_Decomposition:
-    def __init__(self, root: Hypercube, a = 30, thickness = 0.001, N = 6, T = 10):
+    def __init__(self, root: Hypercube, a: float = 30, s: float = 2, thickness = 0.001, N = 6, T = 10):
         """
         root: Hypercube
             The root hypercube of the CZ decomposition
         thickness: float
             The thickness of Ellipsoid
-        a: int
+        a: float
             decomposition constant
+        s: float
+            The separation constant for WSPD
         N: int
             The number of iterations to approximate sigma
         T: int
@@ -22,6 +36,7 @@ class CZ_Decomposition:
         self.root = root
         self.thickness = thickness
         self.a = a
+        self.s = s
         self.N = N
         self.T = T
         self._CZ_decompose()
@@ -30,16 +45,11 @@ class CZ_Decomposition:
     def points(self):
         return self.root.points
 
-    def _CZ_decompose(self, a = 30):
-        # root = wit.Hypercube(np.array([0, 0]), 1, points)
-        sigma = self._approximate_sigma()
-
-        def indices_of_points(p):
-            return [find_index(self.points, q)[0] for q in p]
-
+    def _CZ_decompose(self):
+        # Produce finer decomposition
+        sigma = scale(self._approximate_sigma(), 0.25)
         def is_good(square: Hypercube):
-            p = self.root.search_in(square.dialated(3))
-            i = indices_of_points(p)
+            i = self.root.indices_search_in(square.dialated(3))
             diameters = 2 / np.sqrt(np.linalg.eig(sigma[i])[0].min(axis=-1))
             return np.all(diameters >= self.a * square.width)
 
@@ -47,16 +57,13 @@ class CZ_Decomposition:
         q.put(self.root)
 
         while q.qsize() != 0:
-            current = q.get()
-            current: Hypercube
+            current: Hypercube = q.get()
             if is_good(current):
                 continue
             else:
                 current.subdivide()
                 for child in current.children:
                     q.put(child)
-
-        # return root
 
     def _sigma_0(self, x):
         return _pullback(np.array([
@@ -72,24 +79,73 @@ class CZ_Decomposition:
             [0, 0, 1/delta**2]
         ]), _forward_transformation(x))
 
-    def _approximate_sigma(self, C = 1):
+    def _ball_inverse(self, delta, x):
+        return _pullback(np.array([
+            [delta**4, 0, 0],
+            [0, delta**2, 0],
+            [0, 0, delta**2]
+        ]), _forward_transformation(x))
+
+    def _approximate_sigma(self):
         sigma = np.array([self._sigma_0(x) for x in self.points])
+        groups, well_separated_pairs_indices = build_wspd(self.points, self.s)
 
         def recursion(sigma):
-            new_sigma = sigma
+            # For each A in T, define sigma(A) = intersection(sigma(x) + B(x, diam(A)) for x in A)
+            group_sigma = [
+                intersection([
+                    _sum_with_inverse(
+                        sigma[j],
+                        self._ball_inverse(_diam_inf(self.points[groups[i]]), self.points[j])
+                    )
+                    for j in groups[i]
+                ])
+                for i in range(len(groups))
+            ]
+
+            # For each (A, B) in L,
+            #  Define sigma_1(A) = sigma(A) + B(x_A, diam(A))
+            #  Define sigma_2(B) = sigma(B) + B(x_B, diam(B))
+            # For each (A, B) in L, define sigma(A, B) = intersection(sigma_1(A), sum(sigma_2(B) + B(x_A, |x_A - x_B|)))
+            sigma_temp = [
+                _sum_with_inverse(
+                    group_sigma[j],
+                    self._ball_inverse(_diam_inf(self.points[groups[j]]), self.points[np.random.choice(groups[j])])
+                )
+                for j in range(len(groups))
+            ]
+
+            sigma_bar = [[np.empty(0, dtype=float) for _ in range(len(groups))] for _ in range(len(groups))]
+
+            for j, k in well_separated_pairs_indices:
+                sigma_bar[j][k] = intersection([
+                    sigma_temp[j],
+                    _sum_with_inverse(
+                        sigma_temp[k],
+                        self._ball_inverse(
+                            np.linalg.norm(self.points[groups[j][0]] - self.points[groups[k][0]], ord=np.inf),
+                            self.points[groups[j][0]]
+                        )
+                    )
+                ])
+
+            # For each A in T, define sigma'(A) = intersection(sigma_bar(A, B) where (A, B) in L)
+            sigma_prime = [np.empty(0, dtype=float)] * len(groups)
+            for i in range(len(groups)):
+                intersectands = []
+                for j in range(len(groups)):
+                    if [i, j] in well_separated_pairs_indices:
+                        intersectands.append(sigma_bar[i][j])
+
+                sigma_prime[i] = intersection(intersectands)
+
+            # For each x in E, redefine sigma(x) = simga(x) intersect intersection(sigma(A) for A in T where x in A)
+            new_sigma = [np.empty(0, dtype=float)] * len(self.points)
             for i in range(len(self.points)):
-                x = self.points[i]
-
                 intersectands = [sigma[i]]
-
-                for j in range(len(self.points)):
-                    if i == j:
-                        continue
-                    y = self.points[j]
-                    distance = np.linalg.norm(x - y, ord=2)
-
-                    intersectands.append(sum(sigma[j], scale(self._ball(distance, x), C)))
-
+                for j in range(len(groups)):
+                    if i in groups[j]:
+                        intersectands.append(sigma_prime[j])
                 new_sigma[i] = intersection(intersectands)
 
             return new_sigma
@@ -98,3 +154,28 @@ class CZ_Decomposition:
             sigma = recursion(sigma)
 
         return np.array([_pullback(sigma[i], _forward_transformation(-self.points[i])) for i in range(len(self.points))])
+        # sigma = np.array([self._sigma_0(x) for x in self.points])
+
+        # def recursion(sigma):
+        #     new_sigma = sigma
+        #     for i in range(len(self.points)):
+        #         x = self.points[i]
+
+        #         intersectands = [sigma[i]]
+
+        #         for j in range(len(self.points)):
+        #             if i == j:
+        #                 continue
+        #             y = self.points[j]
+        #             distance = np.linalg.norm(x - y, ord=2)
+
+        #             intersectands.append(sum(sigma[j], scale(self._ball(distance, x), C)))
+
+        #         new_sigma[i] = intersection(intersectands)
+
+        #     return new_sigma
+
+        # for _ in range(6):
+        #     sigma = recursion(sigma)
+
+        # return np.array([_pullback(sigma[i], _forward_transformation(-self.points[i])) for i in range(len(self.points))])
