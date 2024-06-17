@@ -8,6 +8,9 @@ import whitney as wit
 import numpy as np
 import numpy.typing as npt
 
+import plotly.graph_objects as go
+from plotly.graph_objs import Figure
+
 def disambiguate_paris(pairs: list[list[wit.Hypercube]]):
     i = 0
     while i < len(pairs):
@@ -18,7 +21,7 @@ def disambiguate_paris(pairs: list[list[wit.Hypercube]]):
         i += 1
     return pairs
 
-def sample_points(count: int, type: str):
+def sample_points(count: int, type: str = "random"):
     """Types: random, clusters, worst"""
 
     if type == "random":
@@ -60,3 +63,32 @@ def sample_polynomials(points: npt.NDArray, degree):
 def zero_polynomial(dimension, degree):
     array = np.zeros(np.repeat(degree + 1, dimension))
     return array
+
+def approximate_polygon(boundary_func, n: int):
+    angles = np.linspace(0, 2*np.pi, n)
+    directions = np.array([np.cos(angles), np.sin(angles)]).T
+    points = boundary_func(directions) * directions.T
+
+    return points.T
+
+def to_boundary_func(elipse: np.ndarray):
+    def boundary_func(directions):
+        result = []
+        for direction in directions:
+            result.append(np.sqrt((direction @ direction) / (direction @ elipse @ direction)))
+        return np.array(result)
+
+    return boundary_func
+
+def plot_sigma_at(fig: Figure, sigma, x, n=1000):
+    # pullback_sigma = wit._pullback(sigma, wit._forward_transformation(-x))
+    points = approximate_polygon(to_boundary_func(sigma[1:,1:]), n)
+    points = points + x
+    fig.add_trace(go.Scatter(x=points[:,0], y=points[:,1], fill="toself"))
+
+def _plot_sigma_at(ax, sigma, x):
+    # pullback_sigma = wit._pullback(sigma, wit._forward_transformation(-x))
+    n = 1000
+    points = approximate_polygon(to_boundary_func(sigma[1:,1:]), n)
+    points = points + x
+    ax.fill(points[:,0], points[:,1], alpha=0.5)
