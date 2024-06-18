@@ -48,7 +48,8 @@ E = np.array([point for point in E if 0 <= point[0] <= 1 and 0 <= point[1] <= 1]
 np.random.shuffle(E)
 
 root = wit.Hypercube((0, 0), 1, E)
-sigma = wit.CZ_Decomposition(root)._approximate_sigma()
+decomposition = wit.CZ_Decomposition(root, post_shrinking=1)
+sigma = decomposition._approximate_sigma()
 # %% Plotting
 
 fig = go.Figure()

@@ -18,7 +18,7 @@ def _diam_inf(points):
     return np.sqrt(2) * np.max(dist_mat)
 
 class CZ_Decomposition:
-    def __init__(self, root: Hypercube, a: float = 30, s: float = 2, thickness = 0.001, N = 6, T = 10):
+    def __init__(self, root: Hypercube, a: float = 30, s: float = 2, thickness = 0.001, N = 6, T = 10, post_shrinking = 0.25):
         """
         root: Hypercube
             The root hypercube of the CZ decomposition
@@ -39,6 +39,7 @@ class CZ_Decomposition:
         self.s = s
         self.N = N
         self.T = T
+        self.post_shrinking = post_shrinking
         self._CZ_decompose()
 
     @property
@@ -47,7 +48,7 @@ class CZ_Decomposition:
 
     def _CZ_decompose(self):
         # Produce finer decomposition
-        sigma = scale(self._approximate_sigma(), 0.25)
+        sigma = scale(self._approximate_sigma(), self.post_shrinking)
         def is_good(square: Hypercube):
             i = self.root.indices_search_in(square.dialated(3))
             diameters = 2 / np.sqrt(np.linalg.eig(sigma[i])[0].min(axis=-1))
@@ -84,11 +85,18 @@ class CZ_Decomposition:
             [delta**4, 0, 0],
             [0, delta**2, 0],
             [0, 0, delta**2]
-        ]), _forward_transformation(x))
+        ]), _forward_transformation(-x).T)
 
     def _approximate_sigma(self):
         sigma = np.array([self._sigma_0(x) for x in self.points])
+        rotated_points = np.array([[1-point[1], point[0]] for point in self.points])
         groups, well_separated_pairs_indices = build_wspd(self.points, self.s)
+
+        self._groups = groups
+        self._well_separated_pairs_indices = well_separated_pairs_indices
+        self._group_sigma: list[np.ndarray]
+        self._sigma_bar: list[list[np.ndarray]]
+        self._sigma_prime: list[np.ndarray]
 
         def recursion(sigma):
             # For each A in T, define sigma(A) = intersection(sigma(x) + B(x, diam(A)) for x in A)
@@ -102,6 +110,7 @@ class CZ_Decomposition:
                 ])
                 for i in range(len(groups))
             ]
+            self._group_sigma = group_sigma
 
             # For each (A, B) in L,
             #  Define sigma_1(A) = sigma(A) + B(x_A, diam(A))
@@ -129,8 +138,10 @@ class CZ_Decomposition:
                     )
                 ])
 
+            self._sigma_bar = sigma_bar
+
             # For each A in T, define sigma'(A) = intersection(sigma_bar(A, B) where (A, B) in L)
-            sigma_prime = [np.empty(0, dtype=float)] * len(groups)
+            sigma_prime = [np.empty(0, dtype=float) for _ in range(len(groups))]
             for i in range(len(groups)):
                 intersectands = []
                 for j in range(len(groups)):
@@ -139,8 +150,10 @@ class CZ_Decomposition:
 
                 sigma_prime[i] = intersection(intersectands)
 
+            self._sigma_prime = sigma_prime
+
             # For each x in E, redefine sigma(x) = simga(x) intersect intersection(sigma(A) for A in T where x in A)
-            new_sigma = [np.empty(0, dtype=float)] * len(self.points)
+            new_sigma = [np.empty(0, dtype=float) for _ in range(len(self.points))]
             for i in range(len(self.points)):
                 intersectands = [sigma[i]]
                 for j in range(len(groups)):
@@ -150,7 +163,7 @@ class CZ_Decomposition:
 
             return new_sigma
 
-        for _ in range(6):
+        for _ in range(self.N):
             sigma = recursion(sigma)
 
         return np.array([_pullback(sigma[i], _forward_transformation(-self.points[i])) for i in range(len(self.points))])
