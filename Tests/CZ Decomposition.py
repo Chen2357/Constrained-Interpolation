@@ -64,8 +64,13 @@ fig.show()
 
 # %%
 a1 = 1
-a2 = 1
+a2 = 0.01
 assign_is_CZ(root, a1, a2)
 wit.Plotting.plot_hypercube(root, opacity=1, fillcolor_map=CZ_comparison_fillcolor_map)
 # %%
-wit.Plotting.plot_hypercube(get_actual_CZ(E, a1, a2), opacity=1)
+actual_CZ = get_actual_CZ(E, a1, a2)
+print(np.log2(np.min([leaf.width for leaf in root.leaves])))
+print(np.all([leaf.is_CZ for leaf in root.leaves])) # type: ignore
+print(np.log2(np.min([leaf.width for leaf in actual_CZ.leaves])))
+wit.Plotting.plot_hypercube(actual_CZ, opacity=1)
+# %%
