@@ -5,6 +5,8 @@ from .Hypercube import Hypercube
 import queue
 from .WSPD import build_wspd
 
+import timeit
+
 
 from scipy import spatial
 
@@ -40,7 +42,16 @@ class CZ_Decomposition:
         self.N = N
         self.T = T
         self.post_shrinking = post_shrinking
+
+        self.group_sigma_counter = float(0)
+        self.sigma_temp_counter = float(0)
+        self.sigma_bar_counter = float(0)
+        self.sigma_prime_counter = float(0)
+        self.new_sigma_counter = float(0)
+
         self._CZ_decompose()
+
+        
 
     @property
     def points(self):
@@ -48,6 +59,7 @@ class CZ_Decomposition:
 
     def _CZ_decompose(self):
         # Produce finer decomposition
+
         sigma = scale(self._approximate_sigma(), self.post_shrinking)
         def is_good(square: Hypercube):
             i = self.root.indices_search_in(square.dialated(3))
@@ -98,8 +110,12 @@ class CZ_Decomposition:
         self._sigma_bar: list[list[np.ndarray]]
         self._sigma_prime: list[np.ndarray]
 
-        def recursion(sigma):
+        def recursion(self, sigma):
             # For each A in T, define sigma(A) = intersection(sigma(x) + B(x, diam(A)) for x in A)
+
+            """"""
+            group_sigma_time = timeit.default_timer()
+            """"""
             group_sigma = [
                 intersection([
                     _sum_with_inverse(
@@ -111,11 +127,18 @@ class CZ_Decomposition:
                 for i in range(len(groups))
             ]
             self._group_sigma = group_sigma
+            """"""
+            group_sigma_time_diff = timeit.default_timer() - group_sigma_time
+            self.group_sigma_counter = self.group_sigma_counter + group_sigma_time_diff
+            """"""
 
             # For each (A, B) in L,
             #  Define sigma_1(A) = sigma(A) + B(x_A, diam(A))
             #  Define sigma_2(B) = sigma(B) + B(x_B, diam(B))
             # For each (A, B) in L, define sigma(A, B) = intersection(sigma_1(A), sum(sigma_2(B) + B(x_A, |x_A - x_B|)))
+            """"""
+            sigma_temp_time = timeit.default_timer()
+            """"""
             sigma_temp = [
                 _sum_with_inverse(
                     group_sigma[j],
@@ -123,7 +146,14 @@ class CZ_Decomposition:
                 )
                 for j in range(len(groups))
             ]
+            """"""
+            sigma_temp_time_diff = timeit.default_timer() - sigma_temp_time
+            self.sigma_temp_counter = self.sigma_temp_counter + sigma_temp_time_diff
+            """"""
 
+            """"""
+            sigma_bar_time = timeit.default_timer()
+            """"""
             sigma_bar = [[np.empty(0, dtype=float) for _ in range(len(groups))] for _ in range(len(groups))]
 
             for j, k in well_separated_pairs_indices:
@@ -139,8 +169,15 @@ class CZ_Decomposition:
                 ])
 
             self._sigma_bar = sigma_bar
+            """"""
+            sigma_bar_time_diff = timeit.default_timer() - sigma_bar_time
+            self.sigma_bar_counter = self.sigma_bar_counter + sigma_bar_time_diff
+            """"""
 
             # For each A in T, define sigma'(A) = intersection(sigma_bar(A, B) where (A, B) in L)
+            """"""
+            sigma_prime_time = timeit.default_timer()
+            """"""
             sigma_prime = [np.empty(0, dtype=float) for _ in range(len(groups))]
             for i in range(len(groups)):
                 intersectands = []
@@ -151,8 +188,15 @@ class CZ_Decomposition:
                 sigma_prime[i] = intersection(intersectands)
 
             self._sigma_prime = sigma_prime
+            """"""
+            sigma_prime_time_diff = timeit.default_timer() - sigma_prime_time
+            self.sigma_prime_counter = self.sigma_prime_counter + sigma_prime_time_diff
+            """"""
 
             # For each x in E, redefine sigma(x) = simga(x) intersect intersection(sigma(A) for A in T where x in A)
+            """"""
+            new_sigma_time = timeit.default_timer()
+            """"""
             new_sigma = [np.empty(0, dtype=float) for _ in range(len(self.points))]
             for i in range(len(self.points)):
                 intersectands = [sigma[i]]
@@ -160,11 +204,15 @@ class CZ_Decomposition:
                     if i in groups[j]:
                         intersectands.append(sigma_prime[j])
                 new_sigma[i] = intersection(intersectands)
-
+                
+            """"""
+            new_sigma_time_diff = timeit.default_timer() - new_sigma_time
+            self.new_sigma_counter = self.new_sigma_counter + new_sigma_time_diff
+            """"""
             return new_sigma
 
         for _ in range(self.N):
-            sigma = recursion(sigma)
+            sigma = recursion(self, sigma)
 
         return np.array([_pullback(sigma[i], _forward_transformation(-self.points[i])) for i in range(len(self.points))])
         # sigma = np.array([self._sigma_0(x) for x in self.points])
