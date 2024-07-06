@@ -13,31 +13,7 @@ import plotly.graph_objects as go
 # set4 = (parabola @ np.array([[np.cos(np.pi/6), -np.sin(np.pi/6)], [np.sin(np.pi/6), np.cos(np.pi/6)]])) * 0.25 + np.array([0.75, 0.2])
 # E = np.concatenate([set1, set2, set3, set4])
 
-E = np.array([
-    [0.01, 0.9],
-    [0.01, 0.85],
-    [0.01, 0.8],
-    [0.01, 0.75],
-    [0.01, 0.7],
-    [0.01, 0.65],
-    [0.01, 0.6],
-    [0.01, 0.55],
-    [0.01, 0.5],
-    [0.01, 0.45],
-    [0.01, 0.4],
-    [0.01, 0.01],
-    [0.4, 0.01],
-    [0.45, 0.01],
-    [0.5, 0.01],
-    [0.55, 0.01],
-    [0.6, 0.01],
-    [0.65, 0.01],
-    [0.7, 0.01],
-    [0.75, 0.01],
-    [0.8, 0.01],
-    [0.85, 0.01],
-    [0.9, 0.01],
-])
+E = sample_points(20, "L")
 
 # E = np.array([[a, 1-a] for a in np.arange(0.1, 1, 0.1)])
 # E = np.array([[a, b] for b in np.arange(0.1, 1, 0.1) for a in np.arange(0.1, 1, 0.1)])
@@ -74,4 +50,16 @@ print(np.log2(np.min([leaf.width for leaf in root.leaves])))
 print(np.all([leaf.is_CZ for leaf in root.leaves])) # type: ignore
 print(np.log2(np.min([leaf.width for leaf in actual_CZ.leaves])))
 wit.Plotting.plot_hypercube(actual_CZ, opacity=1)
+# %%
+
+for i in np.arange(20, 300, 20):
+    np.random.seed(i)
+    E = np.random.rand(20, 2)
+    root = wit.Hypercube((0, 0), 1, E)  
+    sigma = wit.CZ_Decomposition(root, N=2)._approximate_sigma()
+    assign_is_CZ(root, a1, a2)
+    actual_CZ = get_actual_CZ(E, a1, a2)
+    print(np.all([leaf.is_CZ for leaf in root.leaves])) # type: ignore
+    print(np.log2(np.min([leaf.width for leaf in root.leaves])))
+    print(np.log2(np.min([leaf.width for leaf in actual_CZ.leaves])))
 # %%

@@ -22,7 +22,7 @@ def disambiguate_paris(pairs: list[list[wit.Hypercube]]):
     return pairs
 
 def sample_points(count: int, type: str = "random"):
-    """Types: random, clusters, worst"""
+    """Types: random, clusters, worst, circle, L"""
 
     if type == "random":
         return np.random.rand(count, 2)
@@ -46,6 +46,17 @@ def sample_points(count: int, type: str = "random"):
     if type == "worst":
         array = 2.0 ** np.arange(-1, -count-1, -1)
         return np.vstack((array, array)).T
+    
+    if type == "circle":
+        return np.array([0.5, 0.5]) + 0.49 * np.array([np.cos(np.linspace(0, 2*np.pi, count, endpoint=False)), np.sin(np.linspace(0, 2*np.pi, count, endpoint=False))]).T
+    
+    if type == "L":
+        vertical_count = (count - 1) // 2
+        horizontal_count = count - 1 - vertical_count
+
+        vertical = np.array([np.repeat(0.01, vertical_count), np.linspace(0.4, 0.9, vertical_count)]).T
+        horizontal = np.array([np.linspace(0.4, 0.9, horizontal_count), np.repeat(0.01, horizontal_count)]).T
+        return np.concatenate((vertical, horizontal, [np.array([0.01, 0.01])]), axis=0)
 
     raise ValueError("Unknown type")
 
