@@ -151,14 +151,12 @@ class CZ_Decomposition:
 
     def _compute_sigma_prime(self, sigma_bar):
         # For each A in T, define sigma'(A) = intersection(sigma_bar(A, B) where (A, B) in L)
-        sigma_prime = [np.empty(0, dtype=float) for _ in range(len(self._groups))]
-        for i in range(len(self._groups)):
-            intersectands = []
-            for j in range(len(self._groups)):
-                if [i, j] in self._well_separated_pairs_indices:
-                    intersectands.append(sigma_bar[i][j])
+        intersectands = [[] for _ in range(len(self._groups))]
 
-            sigma_prime[i] = intersection(intersectands)
+        for j, k in self._well_separated_pairs_indices:
+            intersectands[j].append(sigma_bar[j][k])
+
+        sigma_prime = [intersection(intersectands[i]) for i in range(len(self._groups))]
 
         return sigma_prime
 
@@ -175,6 +173,7 @@ class CZ_Decomposition:
         return new_sigma
 
     def _approximate_sigma(self):
+        # Algorithm based on page 92 of Fefferman's paper "Fiiting a Cm-smooth function to data II"
         sigma = np.array([self._sigma_0(x) for x in self.points])
         groups, well_separated_pairs_indices = build_wspd(self.points, self.s)
 
@@ -203,28 +202,3 @@ class CZ_Decomposition:
             sigma = recursion(sigma)
 
         return np.array([_pullback(sigma[i], _forward_transformation(-self.points[i])) for i in range(len(self.points))])
-        # sigma = np.array([self._sigma_0(x) for x in self.points])
-
-        # def recursion(sigma):
-        #     new_sigma = sigma
-        #     for i in range(len(self.points)):
-        #         x = self.points[i]
-
-        #         intersectands = [sigma[i]]
-
-        #         for j in range(len(self.points)):
-        #             if i == j:
-        #                 continue
-        #             y = self.points[j]
-        #             distance = np.linalg.norm(x - y, ord=2)
-
-        #             intersectands.append(sum(sigma[j], scale(self._ball(distance, x), C)))
-
-        #         new_sigma[i] = intersection(intersectands)
-
-        #     return new_sigma
-
-        # for _ in range(6):
-        #     sigma = recursion(sigma)
-
-        # return np.array([_pullback(sigma[i], _forward_transformation(-self.points[i])) for i in range(len(self.points))])
