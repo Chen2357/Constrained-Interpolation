@@ -29,37 +29,32 @@ for i in r:
 
     # Preperation time
     mark = timeit.default_timer()
-    sigma = np.array([decomposition._sigma_0(x) for x in decomposition.points])
-    groups, well_separated_pairs_indices = wit.build_wspd(decomposition.points, decomposition.s)
-
-    decomposition._groups = groups
-    decomposition._diameters = decomposition._compute_diameters()
-    decomposition._well_separated_pairs_indices = well_separated_pairs_indices
+    decomposition._pre_arpproximate_sigma()
     preperation_time.append(timeit.default_timer() - mark)
 
     # Group sigma
     mark = timeit.default_timer()
-    decomposition._group_sigma = decomposition._compute_group_sigma(sigma)
+    decomposition._compute_group_sigma()
     group_time.append(timeit.default_timer() - mark)
 
     # Sigma temp
     mark = timeit.default_timer()
-    _sigma_temp = decomposition._compute_sigma_temp()
+    decomposition._compute_sigma_temp()
     temp_time.append(timeit.default_timer() - mark)
 
     # Sigma bar
     mark = timeit.default_timer()
-    decomposition._sigma_bar = decomposition._compute_sigma_bar(_sigma_temp)
+    decomposition._compute_sigma_bar()
     bar_time.append(timeit.default_timer() - mark)
 
     # Sigma prime
     mark = timeit.default_timer()
-    decomposition._sigma_prime = decomposition._compute_sigma_prime(decomposition._sigma_bar)
+    decomposition._compute_sigma_prime()
     prime_time.append(timeit.default_timer() - mark)
 
     # New sigma
     mark = timeit.default_timer()
-    decomposition._compute_new_sigma(sigma, decomposition._sigma_prime)
+    decomposition._compute_new_sigma()
     new_time.append(timeit.default_timer() - mark)
 
     time_diff = timeit.default_timer() - start_time
