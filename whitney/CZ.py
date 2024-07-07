@@ -125,7 +125,7 @@ class CZ_Decomposition:
         return [
             _sum_with_inverse(
                 self._group_sigma[j],
-                self._ball_inverse(self._diameters[j], self.points[np.random.choice(self._groups[j])])
+                self._ball_inverse(self._diameters[j], self.points[self._groups[j][0]])
             )
             for j in range(len(self._groups))
         ]
@@ -135,11 +135,8 @@ class CZ_Decomposition:
         #  Define sigma_1(A) = sigma(A) + B(x_A, diam(A))
         #  Define sigma_2(B) = sigma(B) + B(x_B, diam(B))
         # For each (A, B) in L, define sigma(A, B) = intersection(sigma_1(A), sum(sigma_2(B) + B(x_A, |x_A - x_B|)))
-        sigma_bar = [[np.empty(0, dtype=float) for _ in range(len(self._groups))] for _ in range(len(self._groups))]
-        # print(np.shape(sigma_bar))
-
-        for j, k in self._well_separated_pairs_indices:
-            sigma_bar[j][k] = intersection([
+        sigma_bar = [
+            intersection([
                 sigma_temp[j],
                 _sum_with_inverse(
                     sigma_temp[k],
@@ -149,6 +146,8 @@ class CZ_Decomposition:
                     )
                 )
             ])
+            for j, k in self._well_separated_pairs_indices
+        ]
 
         return sigma_bar
 
@@ -156,8 +155,8 @@ class CZ_Decomposition:
         # For each A in T, define sigma'(A) = intersection(sigma_bar(A, B) where (A, B) in L)
         intersectands = [[] for _ in range(len(self._groups))]
 
-        for j, k in self._well_separated_pairs_indices:
-            intersectands[j].append(sigma_bar[j][k])
+        for i in range(len(self._well_separated_pairs_indices)):
+            intersectands[self._well_separated_pairs_indices[i][0]].append(sigma_bar[i])
 
         sigma_prime = [intersection(intersectands[i]) for i in range(len(self._groups))]
 
@@ -185,7 +184,7 @@ class CZ_Decomposition:
         self._diameters = np.array([_diam_inf(self.points[group]) for group in groups])
 
         self._group_sigma: list[np.ndarray]
-        self._sigma_bar: list[list[np.ndarray]]
+        self._sigma_bar: list[np.ndarray]
         self._sigma_prime: list[np.ndarray]
 
         def recursion(sigma):
