@@ -24,7 +24,7 @@ E = np.array([point for point in E if 0 <= point[0] <= 1 and 0 <= point[1] <= 1]
 np.random.shuffle(E)
 
 root = wit.Hypercube((0, 0), 1, E)
-decomposition = wit.CZ_Decomposition(root, post_shrinking=1)
+decomposition = wit.CZ_decompose(root, post_shrinking=1)
 sigma = decomposition._approximate_sigma()
 # %% Plotting
 
@@ -55,7 +55,7 @@ wit.Plotting.plot_hypercube(actual_CZ, opacity=1)
 for i in np.arange(20, 300, 20):
     np.random.seed(i)
     E = np.random.rand(20, 2)
-    root = wit.Hypercube((0, 0), 1, E)  
+    root = wit.Hypercube((0, 0), 1, E)
     sigma = wit.CZ_Decomposition(root, N=2)._approximate_sigma()
     assign_is_CZ(root, a1, a2)
     actual_CZ = get_actual_CZ(E, a1, a2)
