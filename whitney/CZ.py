@@ -105,13 +105,16 @@ class CZ_Decomposition:
             [0, 0, delta**2]
         ]), _forward_transformation(-x).T)
 
+    def _compute_diameters(self):
+        return np.array([_diam_inf(self.points[group]) for group in self._groups])
+
     def _compute_group_sigma(self, sigma):
         # For each A in T, define sigma(A) = intersection(sigma(x) + B(x, diam(A)) for x in A)
         return [
             intersection([
                 _sum_with_inverse(
                     sigma[j],
-                    self._ball_inverse(_diam_inf(self.points[self._groups[i]]), self.points[j])
+                    self._ball_inverse(self._diameters[i], self.points[j])
                 )
                 for j in self._groups[i]
             ])
@@ -122,7 +125,7 @@ class CZ_Decomposition:
         return [
             _sum_with_inverse(
                 self._group_sigma[j],
-                self._ball_inverse(_diam_inf(self.points[self._groups[j]]), self.points[np.random.choice(self._groups[j])])
+                self._ball_inverse(self._diameters[j], self.points[np.random.choice(self._groups[j])])
             )
             for j in range(len(self._groups))
         ]
@@ -179,6 +182,8 @@ class CZ_Decomposition:
 
         self._groups = groups
         self._well_separated_pairs_indices = well_separated_pairs_indices
+        self._diameters = np.array([_diam_inf(self.points[group]) for group in groups])
+
         self._group_sigma: list[np.ndarray]
         self._sigma_bar: list[list[np.ndarray]]
         self._sigma_prime: list[np.ndarray]
