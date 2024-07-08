@@ -172,7 +172,7 @@ class CZ_Decomposition:
 
         self._groups = groups
         self._well_separated_pairs_indices = well_separated_pairs_indices
-        self._diameters = np.array([_diam_inf(self.points[group]) for group in groups])
+        self._diameters = self._compute_diameters()
 
         self._group_sigma = np.empty((len(groups), 3, 3))
         self._sigma_temp = np.empty((len(groups), 3, 3))
