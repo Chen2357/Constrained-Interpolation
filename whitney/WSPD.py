@@ -7,17 +7,26 @@ def build_wspd(points: np.ndarray, s: float):
     wspd_points = [wspd.point(points[i]) for i in range(num_points)]  # type: ignore
 
     L_half = wspd.build_wspd(num_points, dim, s, wspd_points) # type: ignore
-    L_half: list[tuple[list[int], list[int]]]
+    L_half = [(np.array(A), np.array(B)) for A, B in L_half]
 
-    L = L_half + [(B, A) for A, B in L_half]
+    groups = []
+    group_to_index = {}
+    well_separated_pairs_indices = []
 
-    T_with_duplicates = [A for tup in L for A in tup]
+    for A, B in L_half:
+        A_bytes = A.tobytes()
+        B_bytes = B.tobytes()
 
-    T = []
-    for A in T_with_duplicates:
-        if A not in T:
-            T.append(A)
+        if A_bytes not in group_to_index:
+            group_to_index[A_bytes] = len(groups)
+            groups.append(A)
+        if B_bytes not in group_to_index:
+            group_to_index[B_bytes] = len(groups)
+            groups.append(B)
 
-    new_L = [[T.index(A) for A in tup] for tup in L]
+        A_index = group_to_index[A_bytes]
+        B_index = group_to_index[B_bytes]
+        well_separated_pairs_indices.append((A_index, B_index))
+        well_separated_pairs_indices.append((B_index, A_index))
 
-    return (T, new_L)
+    return (groups, well_separated_pairs_indices)
