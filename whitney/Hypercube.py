@@ -1,4 +1,3 @@
-from operator import length_hint
 import numpy as np
 import numpy.typing as npt
 from typing import Union, Dict, Callable
