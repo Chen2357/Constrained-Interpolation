@@ -46,10 +46,10 @@ def sample_points(count: int, type: str = "random"):
     if type == "worst":
         array = 2.0 ** np.arange(-1, -count-1, -1)
         return np.vstack((array, array)).T
-    
+
     if type == "circle":
         return np.array([0.5, 0.5]) + 0.49 * np.array([np.cos(np.linspace(0, 2*np.pi, count, endpoint=False)), np.sin(np.linspace(0, 2*np.pi, count, endpoint=False))]).T
-    
+
     if type == "L":
         vertical_count = (count - 1) // 2
         horizontal_count = count - 1 - vertical_count
