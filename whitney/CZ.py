@@ -17,7 +17,7 @@ def _diam_inf(points):
     dist_mat = spatial.distance_matrix(candidates, candidates, p=float('inf')) # type: ignore
     return np.sqrt(2) * np.max(dist_mat)
 
-def CZ_decompose(root: Hypercube, a: float = 30, s: float = 2, thickness = 0.001, N = 6, T = 10, post_shrinking = 0.25):
+def CZ_decompose(root: Hypercube, a: float = 30, s: float = 2, thickness = 0.001, N = 3, T = 10, post_shrinking = 0.25):
     """
     root: Hypercube
         The root hypercube of the CZ decomposition
