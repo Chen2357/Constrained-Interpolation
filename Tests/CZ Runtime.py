@@ -69,7 +69,7 @@ def plot(titles, times):
     fig = make_subplots(rows=rows, cols=1, subplot_titles=titles)
 
     for i in range(rows):
-        fig.add_trace(go.Scatter(x=r, y=times[i]/(r*np.log(r)), mode='lines+markers', name=titles[i]), row=i+1, col=1)
+        fig.add_trace(go.Scatter(x=r, y=times[i], mode='lines+markers', name=titles[i]), row=i+1, col=1)
 
     fig.update_layout(height=150*rows)
     fig.show()
