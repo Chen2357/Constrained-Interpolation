@@ -3,11 +3,6 @@ import numpy as np
 import numpy.typing as npt
 from typing import Union, Dict, Callable
 import queue
-import matplotlib.pyplot as plt
-from matplotlib.axes import Axes
-from matplotlib.collections import PatchCollection, LineCollection
-from matplotlib.patches import Rectangle
-from collections import defaultdict
 
 class Hypercube:
     """This is a hypercube object that serves as a node in our quadtree.

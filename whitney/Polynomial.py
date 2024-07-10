@@ -1,6 +1,6 @@
 import numpy as np
 import numpy.typing as npt
-from typing import Union, Dict
+from typing import Dict
 from .Hypercube import Hypercube
 
 Polynomials = Dict["bytes", npt.NDArray]

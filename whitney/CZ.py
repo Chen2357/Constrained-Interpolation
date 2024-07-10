@@ -1,8 +1,7 @@
 import numpy as np
 import numpy.typing as npt
-from .Convex import _pullback, _forward_transformation, scale, sum, _inv_john_ellipsoid, intersection, _sum_with_inverse
+from .Convex import _pullback, _forward_transformation, scale, intersection, _sum_with_inverse
 from .Hypercube import Hypercube
-import queue
 from .WSPD import build_wspd
 
 
