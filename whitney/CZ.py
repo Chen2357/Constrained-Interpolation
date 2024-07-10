@@ -67,22 +67,15 @@ class CZ_Decomposition:
     def _CZ_decompose(self):
         # Produce finer decomposition
         sigma = scale(self._approximate_sigma(), self.post_shrinking)
+        quad = Hypercube((0, 0), 1, self.points)
+        quad.decompose("quad")
+
         def is_good(square: Hypercube):
-            i = self.root.indices_search_in(square.dialated(3))
+            i = quad.indices_search_in(square.dialated(3))
             diameters = 2 / np.sqrt(np.linalg.eig(sigma[i])[0].min(axis=-1))
             return np.all(diameters >= self.a * square.width)
 
-        q = queue.Queue()
-        q.put(self.root)
-
-        while q.qsize() != 0:
-            current: Hypercube = q.get()
-            if is_good(current):
-                continue
-            else:
-                current.subdivide()
-                for child in current.children:
-                    q.put(child)
+        self.root._decompose(is_good)
 
     def _sigma_0(self, x):
         return _pullback(np.array([
